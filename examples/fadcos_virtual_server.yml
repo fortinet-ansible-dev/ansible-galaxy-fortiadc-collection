@@ -1,0 +1,19 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage virtual server
+      fadcos_virtual_server:
+       action: edit
+       name: test
+       status: enable
+       iptype: ipv4
+       ip: 7.7.7.1
+       interface: port3
+       pool: rs_pool
+       port: 80
+       profile: LB_PROF_TCP
+       vstype: l4-load-balance

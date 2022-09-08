@@ -1,0 +1,16 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Create nat poot
+      fadcos_nat_pool_member:
+        action: delete
+        natpool_name: natpool
+        name: test
+        interface: port1
+        pooltype: ipv4
+        ipmin: 192.168.2.102
+        ipmax: 192.168.2.110

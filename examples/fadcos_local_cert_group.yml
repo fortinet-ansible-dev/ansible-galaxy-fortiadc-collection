@@ -1,0 +1,14 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage Local Certificate Group
+      fadcos_local_cert_group:
+        action: add_group
+        name: ansible_test_G2
+    - name: Manage Local Certificate Group Members
+      fadcos_local_cert_group:
+        action: add_member
+        name: ansible_test_G2

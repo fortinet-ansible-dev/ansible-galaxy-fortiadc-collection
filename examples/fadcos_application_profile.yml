@@ -1,0 +1,15 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage Application Profile
+      fadcos_application_profile:
+        action: add
+        name: ansible_test_1
+        type: tcp
+        timeout_tcp_session: 150
+        ip_reputation: disable
+
+

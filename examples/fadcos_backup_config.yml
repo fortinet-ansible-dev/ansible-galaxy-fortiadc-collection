@@ -1,0 +1,11 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Backup config
+      fadcos_backup_config:
+        action: save
+        path: /temp/fortiadc/.
+        password: pwd

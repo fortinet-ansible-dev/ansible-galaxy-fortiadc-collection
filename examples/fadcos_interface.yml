@@ -1,0 +1,23 @@
+---
+- name:
+  hosts: all
+  vars:
+        ansible_network_os: fadcos
+        ansible_user: ansible
+        ansible_password: ansible
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage interface
+      fadcos_interface:
+       action: get
+       name: testport
+       mode: static
+       intf_type: vlan
+       interface: port5
+       vlanid: 100
+       IPandMask: 123.23.3.12/24
+       allowaccess:
+               - snmp
+               - http
+       #vdom: root

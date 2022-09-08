@@ -1,0 +1,12 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Create admin
+      fadcos_admin:
+       action: edit
+       name: test
+       password: test
