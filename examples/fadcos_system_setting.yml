@@ -1,0 +1,10 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage system setting
+      fadcos_system_setting:
+       idle_timeout: 78
+       config_sync: disable

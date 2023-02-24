@@ -1,0 +1,14 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage real server
+      fadcos_real_server:
+       action: add
+       name: rs
+       ip: 6.6.6.5
+       status: enable
+       vdom: root

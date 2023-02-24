@@ -1,0 +1,11 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: upload vm license
+      fadcos_vm_license:
+       action: upload
+       srcfile: license_file

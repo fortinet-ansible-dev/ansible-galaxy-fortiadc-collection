@@ -1,0 +1,10 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage Real Server SSL Profile
+      fadcos_real_server_ssl_profile:
+        action: add
+        name: ansible_test_server_ssl

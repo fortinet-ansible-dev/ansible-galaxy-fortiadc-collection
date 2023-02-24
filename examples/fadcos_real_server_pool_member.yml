@@ -1,0 +1,15 @@
+---
+- name:
+  hosts: all
+  vars:
+        ansible_network_os: fadcos
+        ansible_user: ansible
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage real server pool member
+      fadcos_real_server_pool_member:
+        action: delete
+        pool_name: rs_pool
+        member_id: 3
+        rs: 999

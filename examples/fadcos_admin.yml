@@ -1,0 +1,16 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Create admin
+      fadcos_admin:
+       action: add
+       name: test1
+       vdom: ["root"]
+       #multi vdom: ["root", "vdom1", "vdom2"]
+       password: a
+       # if need cheange pwd and user is not global admin oldpassword need to set
+       #oldpassword: a
