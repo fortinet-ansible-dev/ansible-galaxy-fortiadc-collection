@@ -1,0 +1,29 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: create
+      fadcos_load_balance_method:
+       action: add
+       name: test
+       type: round-robin
+
+    - name: get
+      fadcos_load_balance_method:
+       action: get
+
+    - name: edit
+      fadcos_load_balance_method:
+       action: edit
+       name: test
+       type: host-hash
+
+    - name: delete
+      fadcos_load_balance_method:
+       action: remove
+       names:
+            - test
+

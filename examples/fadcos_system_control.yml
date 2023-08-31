@@ -1,0 +1,9 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: system control
+      fadcos_system_control:
+              action: reboot

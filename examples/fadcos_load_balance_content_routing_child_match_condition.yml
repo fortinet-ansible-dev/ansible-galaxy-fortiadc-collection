@@ -1,0 +1,62 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: create
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: add
+       name: test
+       type: string
+       content: match
+       ignorecase: enable
+       reverse: enable
+       object: http-host-header
+
+    - name: create
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: add
+       name: test
+       type: regular-expression
+       content: match
+       ignorecase: enable
+       reverse: enable
+       object: http-request-rul
+
+    - name: edit
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: edit
+       name: test
+       type: regular-expression
+       content: match
+       ignorecase: disable
+       reverse: disable
+       object: http-referer-header
+       id: 1
+
+    - name: edit
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: edit
+       name: test
+       type: string
+       content: match
+       ignorecase: disable
+       reverse: disable
+       object: sni
+       id: 2
+
+    - name: get
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: get
+       name: test
+
+    - name: delete
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: remove
+       name: test
+       id_list:
+            - '1'
+            - '2'
+

@@ -1,0 +1,31 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: delete 
+      fadcos_system_ha_remote_ip_monitor:
+       action: delete 
+       name: test1
+          
+    - name: Create
+      fadcos_system_ha_remote_ip_monitor:
+       action: add
+       health_check_interval: 10
+       health_check_timeout: 5
+       health_check_retry: 3
+       remote_address: 1.1.1.1
+       source_port: port1
+       name: test1
+
+    - name: edit
+      fadcos_system_ha_remote_ip_monitor:
+       action: edit 
+       health_check_interval: 10
+       health_check_timeout: 5
+       health_check_retry: 3
+       remote_address: 1.1.1.2
+       source_port: port1
+       name: test1

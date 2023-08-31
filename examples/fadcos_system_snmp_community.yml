@@ -1,0 +1,35 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add
+      fadcos_system_snmp_community:
+       action: add
+       name: test
+       query_v1_port: '161'
+       query_v1_status: enable
+       query_v2c_port: '161'
+       query_v2c_status: enable
+
+
+    - name: edit
+      fadcos_system_snmp_community:
+       action: edit
+       id: '1'
+       query_v1_port: '162'
+       query_v1_status: disable
+       query_v2c_port: '162'
+       query_v2c_status: disable
+
+    - name: get
+      fadcos_system_snmp_community:
+       action: get
+
+    - name: remove
+      fadcos_system_snmp_community:
+       action: remove
+       id_list:
+            - '1'

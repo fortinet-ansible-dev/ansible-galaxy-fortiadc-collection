@@ -1,0 +1,29 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add
+      fadcos_error_page:
+       action: add
+       name: test2
+       vpath: /fortiadc_error_page/
+       srcfile: errpage.tar
+
+    - name: get
+      fadcos_error_page:
+       action: get
+
+    - name: edit
+      fadcos_error_page:
+       action: edit
+       name: test2
+       vpath: /fortiadc_error_pages/
+
+    - name: remove
+      fadcos_error_page:
+       action: remove
+       names:
+           - test2

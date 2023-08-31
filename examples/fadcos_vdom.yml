@@ -1,0 +1,11 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Manage vdom
+      fadcos_vdom:
+       action: delete
+       name: ansible_vdom

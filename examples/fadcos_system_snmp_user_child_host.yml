@@ -1,0 +1,32 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add
+      fadcos_system_snmp_user_child_host:
+       action: add
+       snmp_name: 'test'
+       ip: '172.23.133.0/24'
+
+    - name: edit
+      fadcos_system_snmp_user_child_host:
+       action: edit
+       snmp_name: 'test'
+       id: '1'
+       ip: '172.23.140.0/24'
+
+    - name: get
+      fadcos_system_snmp_user_child_host:
+       action: get
+       snmp_name: 'test'
+
+    - name: remove
+      fadcos_system_snmp_user_child_host:
+       action: remove
+       snmp_name: 'test'
+       id_list:
+            - '1'
+

@@ -1,0 +1,143 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test1
+       type: source-address
+       timeout: 300
+       ipv4_maskbits: '32'
+       ipv6_maskbits: '128'
+       match_across_virtual_servers: disable
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test2
+       type: consistent-hash-ip
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test3
+       type: hash-source-address-port
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test4
+       type: hash-http-header
+       keyword: keyword
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test5
+       type: hash-http-request
+       keyword: keyword
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test6
+       type: hash-cookie
+       keyword: keyword
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test7
+       type: persistent-cookie
+       keyword: keyword
+       timeout: 300
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test8
+       type: passive-cookie
+       keyword: keyword
+       timeout: 300
+       sess_kw_type: auto
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test9
+       type: insert-cookie
+       keyword: keyword
+       timeout: 300
+       cookie_domain: ""
+       cookie_httponly: disable
+       cookie_secure: disable
+       cookie_samesite: nothing
+       cookie_custom_attr: disable
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test10
+       type: rewrite-cookie
+       keyword: keyword
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test11
+       type: embedded-cookie
+       keyword: keyword
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test12
+       type: radius-attribute
+       timeout: 400
+       match_across_servers: enable
+       override_connection_limit: enable
+       radius_attribute_relation: OR
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test13
+       type: ssl-session-id
+       timeout: 400
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test14
+       type: sip-call-id
+       timeout: 400
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test15
+       type: rdp-cookie
+
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test16
+       type: iso8583-bitmap
+       timeout: 400
+       iso8583_bitmap_relation: OR
+       keyvalue_relation: AND
+
+    - name: get
+      fadcos_load_balance_persistence:
+       action: get
+
+    - name: delete
+      fadcos_load_balance_persistence:
+       action: remove
+       names:
+            - test1
+

@@ -1,0 +1,55 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: create
+      fadcos_load_balance_content_routing:
+       action: add
+       name: test1
+       type: l4-content-routing
+       ip: 172.23.133.178/24
+       method_inherit: disable
+       method: LB_METHOD_LEAST_CONNECTION
+       persistence_inherit: disable
+       persistence: LB_PERSIS_SRC_ADDR
+       schedule_list: disable
+       pool: rs_pool
+       comments: nothings
+
+    - name: create
+      fadcos_load_balance_content_routing:
+       action: add
+       name: test2
+       type: l7-content-routing
+       method_inherit: disable
+       method: LB_METHOD_LEAST_CONNECTION
+       persistence_inherit: disable
+       persistence: LB_PERSIS_SRC_ADDR
+       schedule_list: disable
+       pool: rs_pool
+       comments: nothings
+
+    - name: edit
+      fadcos_load_balance_content_routing:
+       action: edit
+       name: test1
+       type: l7-content-routing
+       method_inherit: enable
+       persistence_inherit: enable
+       schedule_list: disable
+       pool: rs_pool
+       comments: nothings
+
+    - name: get
+      fadcos_load_balance_content_routing:
+       action: get
+
+    - name: delete
+      fadcos_load_balance_content_routing:
+       action: remove
+       names:
+            - test1
+

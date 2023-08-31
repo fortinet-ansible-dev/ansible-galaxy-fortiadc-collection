@@ -1,0 +1,66 @@
+---
+- name:
+  hosts: all
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Create local cert group
+      fadcos_local_cert_group:
+        action: add_group
+        name: test_cert_group
+    - name: Add cert group memeber
+      fadcos_local_cert_group:
+        action: add_member
+        name: test_cert_group
+    - name: Create an application profile
+      fadcos_application_profile:
+        action: add
+        name: test_app_profile
+        type: tcp
+        timeout_tcp_session: 150
+        ip_reputation: disable
+    - name: Create Client SSL Profile
+      fadcos_client_ssl_profile:
+        action: add
+        name: test_client_ssl_profile
+        local_certificate_group: test_cert_group
+    - name: Create real server
+      fadcos_real_server:
+       action: add
+       name: test_rs
+       ip: 6.6.6.6
+       status: enable
+       vdom: root
+    - name: Create Real Server SSL Profile
+      fadcos_real_server_ssl_profile:
+        action: add
+        name: test_server_ssl_profile
+    - name: Create real server pool
+      fadcos_real_server_pool:
+        action: add
+        name: test_rs_pool
+        iptype: ipv4
+        vdom: root
+        healthcheck: enable
+        health_check_list:
+           - LB_HLTHCK_ICMP
+           - LC_HLTHCK_HTTPS
+        rs_profile: test_server_ssl_profile 
+    - name: Create real server pool member
+      fadcos_real_server_pool_member:
+        action: add
+        pool_name: test_rs_pool
+        member_id: 1
+        rs: test_rs
+    - name: Create virtual server
+      fadcos_virtual_server:
+       action: add
+       name: test_virtual_server
+       status: enable
+       iptype: ipv4
+       ip: 1.2.3.4
+       interface: port3
+       pool: test_rs_pool
+       port: 80
+       profile: test_app_profile
+       vstype: l4-load-balance

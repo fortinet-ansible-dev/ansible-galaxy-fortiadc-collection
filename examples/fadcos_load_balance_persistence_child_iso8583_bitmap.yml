@@ -1,0 +1,32 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add
+      fadcos_load_balance_persistence_child_iso8583_bitmap:
+       action: add
+       name: test
+       type: 11-sys-trace-audit-num
+
+    - name: edit
+      fadcos_load_balance_persistence_child_iso8583_bitmap:
+       action: edit
+       name: test
+       type: 18-merchant-type
+       id: '1'
+
+    - name: get
+      fadcos_load_balance_persistence_child_iso8583_bitmap:
+       action: get
+       name: test
+
+    - name: remove
+      fadcos_load_balance_persistence_child_iso8583_bitmap:
+       action: remove
+       name: test
+       id_list:
+            - '1'
+

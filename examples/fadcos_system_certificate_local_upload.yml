@@ -1,0 +1,52 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add CertKey
+      fadcos_system_certificate_local_upload:
+       action: add
+       type: CertKey
+       name: test_certkey_text
+       cert: "-----BEGIN CERTIFICATE-----\r\nMIIEdDCCA1ygAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwUjELMAkGA1UEBhMCVFcx\r\nFTATBgNVBAgMDE1pY2stUm9vdC1DQTEZMBcGA1UECgwQTWljay1Sb290LUNBIEx0\r\nZDERMA8GA1UEAwwIbWljay5jb20wHhcNMTkwNDE2MDUwOTE0WhcNMjcwNzAzMDUw\r\nOTE0WjBUMQswCQYDVQQGEwJUVzEVMBMGA1UECAwMTWljay1Sb290LUNBMRkwFwYD\r\nVQQKDBBNaWNrLVJvb3QtQ0EgTHRkMRMwEQYDVQQDDAptaWNrMDEuY29tMIIBIjAN\r\nBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtcduRHIsD+HSiysbV1w3NeSfO5zr\r\nhGzdZy2qg3uUpXUtCdeJOk+PL+nUK3drGd+sVC2sB1cOPxQNB0SODOxDQdBDwxtl\r\nisUYqo2IzHhCY/SXDNsshhp6mQH1yrZRmguuBvU0zEtgUd8HG/TH54XPC8RrUEGt\r\ntmW70lGI7D5eUKjjf6h/5CwDRL9BzNPxeM7LisSwtkDteFLVGZwW9BMMp8uw6wET\r\n3CuhVIQe7iCEQ2tzxXJo729YdxAxvzxcl5QxaS2lUdagyYI0QFmDPR+pfxHg60Dh\r\ngKCgPzeVfVA7NXwjQnyYxtFeVCMzxzLa6EzkuPd9j1hmS0vnz/VTND/DKwIDAQAB\r\no4IBUDCCAUwwCQYDVR0TBAIwADARBglghkgBhvhCAQEEBAMCBkAwMwYJYIZIAYb4\r\nQgENBCYWJE9wZW5TU0wgR2VuZXJhdGVkIFNlcnZlciBDZXJ0aWZpY2F0ZTAdBgNV\r\nHQ4EFgQUSn1X57XIYKSGpOtdnRypvrR3M1YwgY8GA1UdIwSBhzCBhIAU+5C1YZQW\r\nuappXq9Emw0Fci0kEz2hVqRUMFIxCzAJBgNVBAYTAlRXMRUwEwYDVQQIDAxNaWNr\r\nLVJvb3QtQ0ExGTAXBgNVBAoMEE1pY2stUm9vdC1DQSBMdGQxETAPBgNVBAMMCG1p\r\nY2suY29tghR9fTArcRwtamYDWFLqnmoeMVTesDAOBgNVHQ8BAf8EBAMCBaAwEwYD\r\nVR0lBAwwCgYIKwYBBQUHAwEwIQYDVR0RBBowGIIKbWljazAyLmNvbYIKbWljazAz\r\nLmNvbTANBgkqhkiG9w0BAQsFAAOCAQEAM2XBgNK9p01G1Byb2QaiEuu+sGne5AOn\r\nf8AVkJ4Jvszi6WsQX83TBkGUGjc2tZk9ByDfOPwfyUNbqGLLdMr7C5s0czhaLqNx\r\nZJ/Qj+bvwIH581VX3rlURQ4t1tjCb5RKZnqfMOJNaxwNMVTPGA8QvxoyD9UGbmib\r\nA2tbk2SxWHMseVGc3Y3D0r3GMFMsAlTFJpAWKInlGnVU57wWUSumlWexdxliE0sD\r\nuLm+tRd8ZTtkXwtwCowUiIoMAT47CkzVLg6zUAmVz+4SBAg9+KxCpMT682SJWyOz\r\n8CR6X8KNTF3GE3kJEhjdChDczFrTXmMUksrdVySr/awpqDhShhTpLw==\r\n-----END CERTIFICATE-----\r\n"
+       key: "-----BEGIN RSA PRIVATE KEY-----\r\nMIIEowIBAAKCAQEAtcduRHIsD+HSiysbV1w3NeSfO5zrhGzdZy2qg3uUpXUtCdeJ\r\nOk+PL+nUK3drGd+sVC2sB1cOPxQNB0SODOxDQdBDwxtlisUYqo2IzHhCY/SXDNss\r\nhhp6mQH1yrZRmguuBvU0zEtgUd8HG/TH54XPC8RrUEGttmW70lGI7D5eUKjjf6h/\r\n5CwDRL9BzNPxeM7LisSwtkDteFLVGZwW9BMMp8uw6wET3CuhVIQe7iCEQ2tzxXJo\r\n729YdxAxvzxcl5QxaS2lUdagyYI0QFmDPR+pfxHg60DhgKCgPzeVfVA7NXwjQnyY\r\nxtFeVCMzxzLa6EzkuPd9j1hmS0vnz/VTND/DKwIDAQABAoIBAHPlSvBoup8Fo28H\r\ndM8mBC1gLgWb7qznm+GExApAaG11X9m+icebofcyZguwf6Bncz/YPq4PWw3sgsH3\r\ne3nRyK/VUN68QOlQ8IEM7AMxSWLhNs0DkEeP6kpTbZpo024btEDLZXY7OJX6VFYG\r\nos2CCpe+C42H0nFQO4fEZD/7I7bYYjjge0/HTbD8SjMkWn2Cfjz4ML2sBSdh0Df2\r\nYC9Hr21WxoNlZDsogCiKIISUWBbNPo029qlxcBhkW+OFzaNSSrO4tX0m4wJqOf13\r\ngWQXLCajuQeGH9OruU+8x3StBHTSoVW9mPBhZkP6dhHIm3ycp/wE/kDGbbI0cRn3\r\nIStZTMECgYEA8LXu32oHL0LVvY1Z9r8bzYELRz1f5Plnqmi9hr03vE3uWfoZL6vd\r\ngksGz/Wo5kTGMTj1cF/PTs/Kjtoke7CQ79TteAwY3ZMwUGIC9rObKXmKssSTlXiA\r\nmHSF7NOHrkbP0gGmlxohtj+ImaMKFpI4dQFlalg1D6ouAERc9M2Cm6cCgYEAwVM9\r\n49IboQf6TxI+1YMqRPbpm1UeYaGgeM7sbvK6YmgKaKu5ImJRxudQD+XDXTpcZHOO\r\nJq5CHhS98HwYUAKbpxlmmKzXAPY5/kn2r0QcPvHGtFTacV6QY5Lg9ldpmn93S6nU\r\nl92jBO3UU/nq1HqYKGXI6GQOH+0Gv+caValh/N0CgYA+SPVcfhUJ16Ny/uZugJjz\r\nHhcLAgiUOSzn3V5dRQzs/sVUJvDpcvFIS52hphFkNBuMlQ59W21LGV1yhWO3VcLL\r\nLC+eRpMQkouH4TSfHW5i1v5ar574qEuuJ0iYNUwAfnY8Aw1WP/7FJ79y8cskeAV/\r\n0TKqx9RDD2gDzay3841+NQKBgA8zXV1patS5jNvkwl4FZzBu/aVCBxaEH9r/4iVD\r\nHpaYOaFLR05FzspF68ykMz1EVnlrgJTYBMjatqiPCVZZLiXwYFnG1Uz1D1BIPoY/\r\nY70rQ4VwWpCpb870gI2+B8anGRkw7E9YlPXRQW2s6+LzFL2wayCipV2rRGmYYUC1\r\nBchdAoGBAM78RwvGRGDDh4NtyCNIFbcHkXRNhd+F7dij7KOfwPzT4kB8F3Z4EG86\r\ntdcAt/2P5XpTutCczgdjNtTwWGX9PqFkbmh6A8H99prPmXRIJUTI22zrNX0K0jeU\r\nu/QDVZd9vB+dt+41ecgbjVyK2dUnbUxmIcPWCyLjLgnaiHzj2FcW\r\n-----END RSA PRIVATE KEY-----\r\n"
+       upload: text
+       passwd: test
+
+    - name: add PKCS12
+      fadcos_system_certificate_local_upload:
+       action: add
+       type: PKCS12
+       name: test
+       certificate_file: rootCA-Client-RSA.p12
+
+    - name: add CertKey
+      fadcos_system_certificate_local_upload:
+       action: add
+       type: CertKey
+       name: test_certkey
+       certificate_file: rootCA-Serve-RSA.crt
+       key_file: rootCA-Serve-RSA.key
+       passwd: test
+    
+    - name: add Automated
+      fadcos_system_certificate_local_upload:
+       action: add
+       type: Automated
+       name: test_automated
+       passwd: test
+       acme_service: "encrypt"
+       ca_group: ""
+       challenge_type: "dns-01"
+       challenge_wait: "3"
+       domain: "test.com"
+       email: "test@fortinet.com"
+       key_size: "2048"
+       key_type: "RSA"
+       
+
+
+
+

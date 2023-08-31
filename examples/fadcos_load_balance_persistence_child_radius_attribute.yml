@@ -1,0 +1,32 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: add
+      fadcos_load_balance_persistence_child_radius_attribute:
+       action: add
+       name: test
+       type: 1-user-name
+
+    - name: edit
+      fadcos_load_balance_persistence_child_radius_attribute:
+       action: edit
+       name: test
+       type: 43-acct-output-octets
+       id: '1'
+
+    - name: get
+      fadcos_load_balance_persistence_child_radius_attribute:
+       action: get
+       name: test
+
+    - name: remove
+      fadcos_load_balance_persistence_child_radius_attribute:
+       action: remove
+       name: test
+       id_list:
+            - '1'
+

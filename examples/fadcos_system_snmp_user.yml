@@ -1,0 +1,41 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: create
+      fadcos_system_snmp_user:
+       action: add
+       auth_proto: sha1
+       auth_pwd: '123'
+       name: test
+       privacy_proto: aes
+       privacy_pwd: '123'
+       query_port: '161'
+       security_level: authpriv
+       status: enable
+
+    - name: edit
+      fadcos_system_snmp_user:
+       action: edit
+       auth_proto: sha1
+       auth_pwd: '123'
+       name: test
+       privacy_proto: aes
+       privacy_pwd: '123'
+       query_port: '161'
+       security_level: authpriv
+       status: disable
+
+    - name: get
+      fadcos_system_snmp_user:
+       action: get
+
+    - name: remove
+      fadcos_system_snmp_user:
+       action: remove
+       names:
+            - test
+

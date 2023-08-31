@@ -1,0 +1,64 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+
+    - name: create
+      fadcos_system_certificate_local:
+       action: add
+       name: test
+       id_type: ip
+       ip: '192.0.2.1'
+       orgUnit:
+              - test1
+              - test2
+       org: 'MyCorp Inc.'
+       city: Sunnyvale
+       state: CA
+       country: AF
+       orgEmail: 'admin@exammple.com'
+       san: 'IP:192.168.1.102'
+       enc_meth: aes128
+       k_pwd: test
+       keyType: '1'
+       keySize: '2048'
+       hash: SHA256
+       enrollMethod: file
+
+    - name: create
+      fadcos_system_certificate_local:
+       action: add
+       name: test2
+       id_type: domain
+       domain: www.example.com
+       orgUnit:
+              - test3
+       org: MyCorp2 Inc.
+       city: Sunnyvale
+       country: AF
+       state: CA
+       orgEmail: admin@exammple.com
+       san: 'DNS:www.a.b'
+       enc_meth: aes192
+       k_pwd: test
+       keyType: '2'
+       keySizeECDSA: '512'
+       enrollMethod: file
+
+    - name: get
+      fadcos_system_certificate_local:
+       action: get
+
+    - name: delete
+      fadcos_system_certificate_local:
+       action: remove
+       name: test
+
+    - name: delete
+      fadcos_system_certificate_local:
+       action: remove
+       name: test2
+
