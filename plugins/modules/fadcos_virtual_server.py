@@ -351,8 +351,8 @@ def needs_update(module, data):
     if module.params['error_msg'] and module.params['error_msg'] != data['error-msg']:
         data['error-msg'] = module.params['error_msg']
         res = True
-    if module.params['error_page'] and module.params['error_page,'] != data['error-page']:
-        data['error-page'] = module.params['error_page,']
+    if module.params['error_page'] and module.params['error_page'] != data['error-page']:
+        data['error-page'] = module.params['error_page']
         res = True
     if module.params['comments'] and module.params['comments'] != data['comments']:
         data['comments'] = module.params['comments']
