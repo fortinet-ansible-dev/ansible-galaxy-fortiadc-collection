@@ -10,20 +10,37 @@
        action: add
        name: test
        type: round-robin
+       vdom: root
 
-    - name: get
+    - name: create
+      fadcos_load_balance_method:
+       action: add
+       name: test
+       type: host-hash
+       vdom: root
+
+    - name: get all 
       fadcos_load_balance_method:
        action: get
+       vdom: root
+
+    - name: get single
+      fadcos_load_balance_method:
+       action: get
+       name: test
+       vdom: root
 
     - name: edit
       fadcos_load_balance_method:
        action: edit
        name: test
        type: host-hash
+       vdom: root
 
     - name: delete
       fadcos_load_balance_method:
        action: remove
        names:
             - test
+       vdom: root
 

@@ -1,0 +1,50 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: add
+        name: sqlt2
+        body_sql_injection_detection: disable
+        body_xss_detection: disable
+        cookie_sql_injection_detection: disable
+        cookie_xss_detection: disable
+        refer_sql_injection_detection: disable
+        xss_severity: low
+
+    - name: Add WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: add
+        name: sqlt1
+        body_sql_injection_detection: enable
+        body_xss_detection: disable
+        cookie_sql_injection_detection: disable
+        cookie_xss_detection: disable
+        refer_sql_injection_detection: disable
+        xss_severity: low
+
+    - name: edit WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: edit
+        name: sqlt2
+        xss_severity: low
+        cookie_xss_detection: disable
+
+    - name: get WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: get
+        name: sqlt2
+
+    - name: delete WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: delete
+        name: sqlt1
+
+    - name: delete non-existant WAF sql_xss_injection_detection
+      fadcos_waf_heuristic_sql_xss_injection_detection:
+        action: delete
+        name: sqlt112131

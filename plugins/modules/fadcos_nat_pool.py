@@ -33,8 +33,17 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+rep_dict = {
+    'iptype': 'pool_type',
+    'ipstart': 'ip-start',
+    'ipend': 'ip-end'
+}
+
 
 def add_nat_pool(module, connection):
+    after['added'] = module.params
     name = module.params['name']
     interface = module.params['interface']
     iptype = module.params['iptype']
@@ -58,8 +67,11 @@ def add_nat_pool(module, connection):
     if is_vdom_enable(connection):
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
-
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
     return code, response
 
 
@@ -76,7 +88,11 @@ def edit_nat_pool(module, payload, connection):
         else:
             url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -85,16 +101,23 @@ def get_nat_pool(module, connection):
     name = module.params['name']
     vdom = module.params['vdom']
     payload = {}
-    url = '/api/load_balance_ippool?mkey=' + name
+    if name:
+        url = '/api/load_balance_ippool?mkey=' + name
+    else:
+        url = '/api/load_balance_ippool'
     if is_vdom_enable(connection):
         vdom = module.params['vdom']
-        url += '&vdom=' + vdom
+        if name:
+            url += '&vdom=' + vdom
+        else:
+            url += '?vdom=' + vdom
     code, response = connection.send_request(url, payload, 'GET')
 
     return code, response
 
 
 def delete_nat_pool(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     vdom = module.params['vdom']
     payload = {}
@@ -102,37 +125,44 @@ def delete_nat_pool(module, connection):
     if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
-    code, response = connection.send_request(url, payload, 'DELETE')
-
+    
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
     return code, response
 
 
+def combine_dict(src_dict, dst_dict):
+    changed = False
+    for key in dst_dict:
+        if key in src_dict and src_dict[key] is not None and dst_dict[key] != src_dict[key]:
+            dst_dict[key] = src_dict[key]
+            changed = True
+
+    return changed
+
 def needs_update(module, data):
     res = False
-
-    if module.params['interface'] and module.params['interface'] != data['interface']:
-        data['interface'] = module.params['interface']
-        res = True
-    if module.params['iptype'] and module.params['iptype'] != data['pool_type']:
-        data['pool_type'] = module.params['iptype']
-        res = True
-    if data['pool_type'] == 'ipv6':
-        if module.params['ipstart'] and module.params['ipstart'] != data['ip6-start']:
-            data['ip6-start'] = module.params['ipstart']
-            res = True
-        if module.params['ipend'] and module.params['ipend'] != data['ip6-end']:
-            data['ip6-end'] = module.params['ipend']
-            res = True
-    else:
-        if module.params['ipstart'] and module.params['ipstart'] != data['ip-start']:
-            data['ip-start'] = module.params['ipstart']
-            res = True
-        if module.params['ipend'] and module.params['ipend'] != data['ip-end']:
-            data['ip-end'] = module.params['ipend']
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
             res = True
 
     return res, data
-
 
 def param_check(module, connection):
     res = True
@@ -180,25 +210,32 @@ def main():
 
     required_if = [('name')]
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=required_if)
+                           required_if=required_if,
+                           supports_check_mode=True)
     connection = Connection(module._socket_path)
 
     action = module.params['action']
     result = {}
     param_pass, param_err = param_check(module, connection)
+    module.params.pop('action')
+
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
-    elif action == 'add':
-        code, response = add_nat_pool(module, connection)
-        result['res'] = response
-        result['changed'] = True
+        module.exit_json(**result)
+
+    code, data = get_nat_pool(module, connection)
+    if action == 'add':
+        if 'payload' in data.keys() and data['payload'] and isinstance(data['payload'], dict):
+            result['res'] = "Duplicated entry detected."
+        else:
+            code, response = add_nat_pool(module, connection)
+            result['res'] = response
+            result['changed'] = True
     elif action == 'get':
-        code, response = get_nat_pool(module, connection)
-        result['res'] = response
+        result['res'] = data
     elif action == 'edit':
-        code, data = get_nat_pool(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if 'payload' in data.keys() and data['payload'] and isinstance(data['payload'], dict):
             res, new_data = needs_update(module, data['payload'])
         else:
             res = False
@@ -208,13 +245,12 @@ def main():
             result['res'] = response
             result['changed'] = True
     elif action == 'delete':
-        code, data = get_nat_pool(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if 'payload' in data.keys() and data['payload'] and isinstance(data['payload'], dict):
             code, response = delete_nat_pool(module, connection)
             result['res'] = response
             result['changed'] = True
         else:
-            res = False
+            result['changed'] = False
     else:
         result['err_msg'] = 'error action: ' + action
         result['failed'] = True
@@ -226,6 +262,15 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

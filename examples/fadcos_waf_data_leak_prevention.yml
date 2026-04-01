@@ -1,0 +1,29 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF data leak prevention
+      fadcos_waf_data_leak_prevention:
+        action: add
+        name: al1
+
+    - name: Get WAF data leak prevention
+      fadcos_waf_data_leak_prevention:
+        action: get
+        name: al1
+
+    - name: Edit WAF data leak prevention
+      fadcos_waf_data_leak_prevention:
+        action: edit
+        name: al1
+        masking: enable
+        severity: high
+        security_action: block
+        status: enable
+
+    - name: Delete 1st data leak prevention
+      fadcos_waf_data_leak_prevention:
+        action: delete
+        name: al1

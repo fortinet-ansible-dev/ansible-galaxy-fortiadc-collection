@@ -5,11 +5,25 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    - name: create
+      fadcos_system_snmp_user:
+       action: add
+       auth_proto: sha1
+       auth_pwd: '123'
+       name: test
+       privacy_proto: aes
+       privacy_pwd: '123'
+       query_port: '161'
+       security_level: authpriv
+       status: enable
+       vdom: root
+
     - name: add
       fadcos_system_snmp_user_child_host:
        action: add
        snmp_name: 'test'
        ip: '172.23.133.0/24'
+       vdom: root
 
     - name: edit
       fadcos_system_snmp_user_child_host:
@@ -17,11 +31,13 @@
        snmp_name: 'test'
        id: '1'
        ip: '172.23.140.0/24'
+       vdom: root
 
     - name: get
       fadcos_system_snmp_user_child_host:
        action: get
        snmp_name: 'test'
+       vdom: root
 
     - name: remove
       fadcos_system_snmp_user_child_host:
@@ -29,4 +45,4 @@
        snmp_name: 'test'
        id_list:
             - '1'
-
+       vdom: root

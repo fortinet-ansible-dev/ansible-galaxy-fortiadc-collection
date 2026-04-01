@@ -1,0 +1,35 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add allowed_origin
+      fadcos_waf_allowed_origin:
+        action: add
+        name: awo
+
+    - name: Add WAF allowed_origin_child_allowed_origin_list entry
+      fadcos_waf_allowed_origin_list:
+        action: add
+        name: awo
+        origin_name: new_org
+        port: 8080  
+        protocol: HTTP
+        include_sub_domains: disable
+
+    - name: edit WAF allowed_origin_child_allowed_origin_list entry
+      fadcos_waf_allowed_origin_list:
+        action: edit
+        name: awo
+        id: 1
+        origin_name: new_org1
+        port: 80  
+        protocol: HTTPS
+        include_sub_domains: enable
+
+    - name: delete WAF allowed_origin_child_allowed_origin_list entry
+      fadcos_waf_allowed_origin_list:
+        action: delete
+        name: awo
+        id: 1     

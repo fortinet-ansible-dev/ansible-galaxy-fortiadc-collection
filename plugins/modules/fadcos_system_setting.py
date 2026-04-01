@@ -31,6 +31,22 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
+rep_dict = {
+    'idle_timeout': 'admin-idle-timeout',
+    'config_sync': 'config-sync-enable',
+    'intermediate_ca_group': 'default-intermediate-ca-group',
+    'http_port':'http-port',
+    'https_port':'https-port',
+    'https_server_cert':'https-server-cert',
+    'ssh_port':'ssh-port',
+    'sys_global_language':'sys-global-language',
+    'telnet_port':'telnet-port',
+    'vdom':'vdom-admin'
+}
+
 
 def get__sys_setting(module, connection):
     payload = {}
@@ -48,49 +64,71 @@ def update_sys_setting(payload, connection):
     return code, response
 
 
-def needs_update(module, sys_setting):
-    res = False
 
-    if module.params['idle_timeout'] and module.params['idle_timeout'] != sys_setting['admin-idle-timeout']:
-        sys_setting['admin-idle-timeout'] = module.params['idle_timeout']
-        res = True
-    if module.params['config_sync'] and module.params['config_sync'] != sys_setting['config-sync-enable']:
-        sys_setting['config-sync-enable'] = module.params['config_sync']
-        res = True
-    if module.params['intermediate_ca_group'] and module.params['intermediate_ca_group'] != sys_setting['default-intermediate-ca-group']:
-        sys_setting['default-intermediate-ca-group'] = module.params['intermediate_ca_group']
-        res = True
-    if module.params['hostname'] and module.params['hostname'] != sys_setting['hostname']:
-        sys_setting['hostname'] = module.params['hostname']
-        res = True
-    if module.params['http_port'] and module.params['http_port'] != sys_setting['http-port']:
-        sys_setting['http-port'] = module.params['http_port']
-        res = True
-    if module.params['https_port'] and module.params['https_port'] != sys_setting['https-port']:
-        sys_setting['https-port'] = module.params['https_port']
-        res = True
-    if module.params['https_server_cert'] and module.params['https_server_cert'] != sys_setting['https-server-cert']:
-        sys_setting['https-server-cert'] = module.params['https_server_cert']
-        res = True
-    if module.params['ip_primary'] and module.params['ip_primary'] != sys_setting['ip_primary']:
-        sys_setting['ip_primary'] = module.params['ip_primary']
-        res = True
-    if module.params['ip_second'] and module.params['ip_second'] != sys_setting['ip_second']:
-        sys_setting['ip_second'] = module.params['ip_second']
-        res = True
-    if module.params['ssh_port'] and module.params['ssh_port'] != sys_setting['ssh-port']:
-        sys_setting['ssh-port'] = module.params['ssh_port']
-        res = True
-    if module.params['sys_global_language'] and module.params['sys_global_language'] != sys_setting['sys-global-language']:
-        sys_setting['sys-global-language'] = module.params['sys_global_language']
-        res = True
-    if module.params['telnet_port'] and module.params['telnet_port'] != sys_setting['telnet-port']:
-        sys_setting['telnet-port'] = module.params['telnet_port']
-        res = True
-    if module.params['vdom'] and module.params['vdom'] != sys_setting['vdom-admin']:
-        sys_setting['vdom-admin'] = module.params['vdom']
-        res = True
-    return res, sys_setting
+def needs_update(module, data):
+    res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
+
+    return res, data
+
+# def needs_update(module, sys_setting):
+#     res = False
+
+#     if module.params['idle_timeout'] and module.params['idle_timeout'] != sys_setting['admin-idle-timeout']:
+#         sys_setting['admin-idle-timeout'] = module.params['idle_timeout']
+#         res = True
+#     if module.params['config_sync'] and module.params['config_sync'] != sys_setting['config-sync-enable']:
+#         sys_setting['config-sync-enable'] = module.params['config_sync']
+#         res = True
+#     if module.params['intermediate_ca_group'] and module.params['intermediate_ca_group'] != sys_setting['default-intermediate-ca-group']:
+#         sys_setting['default-intermediate-ca-group'] = module.params['intermediate_ca_group']
+#         res = True
+#     if module.params['hostname'] and module.params['hostname'] != sys_setting['hostname']:
+#         sys_setting['hostname'] = module.params['hostname']
+#         res = True
+#     if module.params['http_port'] and module.params['http_port'] != sys_setting['http-port']:
+#         sys_setting['http-port'] = module.params['http_port']
+#         res = True
+#     if module.params['https_port'] and module.params['https_port'] != sys_setting['https-port']:
+#         sys_setting['https-port'] = module.params['https_port']
+#         res = True
+#     if module.params['https_server_cert'] and module.params['https_server_cert'] != sys_setting['https-server-cert']:
+#         sys_setting['https-server-cert'] = module.params['https_server_cert']
+#         res = True
+#     if module.params['ip_primary'] and module.params['ip_primary'] != sys_setting['ip_primary']:
+#         sys_setting['ip_primary'] = module.params['ip_primary']
+#         res = True
+#     if module.params['ip_second'] and module.params['ip_second'] != sys_setting['ip_second']:
+#         sys_setting['ip_second'] = module.params['ip_second']
+#         res = True
+#     if module.params['ssh_port'] and module.params['ssh_port'] != sys_setting['ssh-port']:
+#         sys_setting['ssh-port'] = module.params['ssh_port']
+#         res = True
+#     if module.params['sys_global_language'] and module.params['sys_global_language'] != sys_setting['sys-global-language']:
+#         sys_setting['sys-global-language'] = module.params['sys_global_language']
+#         res = True
+#     if module.params['telnet_port'] and module.params['telnet_port'] != sys_setting['telnet-port']:
+#         sys_setting['telnet-port'] = module.params['telnet_port']
+#         res = True
+#     if module.params['vdom'] and module.params['vdom'] != sys_setting['vdom-admin']:
+#         sys_setting['vdom-admin'] = module.params['vdom']
+#         res = True
+#     return res, sys_setting
 
 
 def main():
@@ -112,7 +150,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = []
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
     result = {'changed': False}
@@ -123,13 +161,27 @@ def main():
         res, data = get__sys_setting(module, connection)
         update, update_data = needs_update(module, data)
         if update:
-            code, response = update_sys_setting(update_data, connection)
-            result['changed'] = True
-            result['code'] = code
-            result['res'] = 'updated'
+            if module.check_mode:
+                result['res'] = 'Check mode: change detected'
+                result['changed'] = True
+            else:
+                code, response = update_sys_setting(update_data, connection)
+                result['code'] = code
+                if code == 200:
+                    result['res'] = 'updated'
+                    result['changed'] = True
         else:
             result['res'] = 'Do not update'
         result['update_data'] = data
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
+
     module.exit_json(**result)
 
 

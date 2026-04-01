@@ -1,0 +1,32 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add cors_headers
+      fadcos_waf_cors_headers:
+        action: add
+        name: cor1
+
+    - name: Add WAF cors_headers_child_cors_headers_list entry
+      fadcos_waf_cors_headers_child_list:
+        action: add
+        name: cor1
+        header: hhhhh
+    - name: edit WAF cors_headers_child_cors_headers_list entry
+      fadcos_waf_cors_headers_child_list:
+        action: edit
+        name: cor1
+        id: 1
+        header: kkkkk
+    - name: edit WAF cors_headers_child_cors_headers_list entry
+      fadcos_waf_cors_headers_child_list:
+        action: get
+        name: cor1
+        id: 1
+    - name: delete WAF cors_headers_child_cors_headers_list entry
+      fadcos_waf_cors_headers_child_list:
+        action: delete
+        name: cor1
+        id: 1

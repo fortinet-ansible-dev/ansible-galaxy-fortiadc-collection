@@ -1,0 +1,32 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add brute_force_login
+      fadcos_waf_brute_force_login:
+        action: add
+        name: b1
+        security_action: alert
+        severity: medium
+        status: enable
+        comments: babababa
+
+    - name: edit brute_force_login
+      fadcos_waf_brute_force_login:
+        action: edit
+        name: b1
+        security_action: block
+        severity: high
+        comments: ttttt
+
+    - name: get brute_force_login
+      fadcos_waf_brute_force_login:
+        action: get
+        name: b1
+
+    - name: delete brute_force_login
+      fadcos_waf_brute_force_login:
+        action: delete
+        name: b1

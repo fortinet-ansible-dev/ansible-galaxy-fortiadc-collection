@@ -31,6 +31,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def reboot(connection):
 
@@ -75,6 +78,15 @@ def main():
     else:
         result['err_msg'] = 'error action: ' + action
         result['failed'] = True
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

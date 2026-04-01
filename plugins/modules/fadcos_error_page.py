@@ -35,6 +35,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/load_balance_error_page'
 upload_url = '/api/upload/error_page'
 
@@ -58,6 +61,7 @@ def update_url(module, url):
         return url
 
 def add_obj(module, connection):
+    after['added'] = module.params
     payload = update_payload(module)
     url = update_url(module, upload_url)
     if sys.version_info >= (3,6):
@@ -70,7 +74,12 @@ def add_obj(module, connection):
                     },
                 'Content-Transfer-Encoding' : "base64",
                 }
-        content_type, b_data = prepare_multipart_base64(data)
+        try:
+            content_type, b_data = prepare_multipart_base64(data)
+        except Exception:
+            response = "error reading " + payload['local_pc'] +", please check whether this file exists."
+            code = False
+            return code, response   
     else:
         data = {
                 'vpath': payload['vpath'],
@@ -84,7 +93,11 @@ def add_obj(module, connection):
     headers = {
         'Content-type': content_type,
     }
-    code, response = connection.send_url_request(url, b_data.decode('ascii'), headers=headers)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.'
+    else:
+        code, response = connection.send_url_request(url, b_data.decode('ascii'), headers=headers)
     return code, response
 
 def get_obj(module, connection):
@@ -99,14 +112,22 @@ def edit_obj(module, connection):
         url = obj_url + '?vdom=' + module.params['vdom'] + '&mkey=' + payload['mkey']
     else:
         url = obj_url + '?mkey=' + payload['mkey']
-
-    return request_obj(url, payload, connection, 'PUT')
+    if module.check_mode:
+        code = False
+        response = 'Check mode: changes detected.' 
+        return code, response
+    else:
+        return request_obj(url, payload, connection, 'PUT')
 
 def remove_obj(module, connection):
     url = update_url(module, obj_url + '/batch_remove')
     payload = update_payload(module)
-
-    return request_obj(url, payload, connection, 'POST')
+    if module.check_mode:
+        code = False
+        response = 'Check mode: changes detected.' 
+        return code, response 
+    else:
+        return request_obj(url, payload, connection, 'POST')
 
 def request_obj(url, payload, connection, action):
     code, response = connection.send_request(url, payload, action)
@@ -147,7 +168,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -157,34 +178,54 @@ def main():
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
+        module.exit_json(**result)
     elif not vdom_pass:
         result['failed'] = True
         result['err_msg'] = vdom_msg
     elif action == 'add':
         code, response = add_obj(module, connection)
-        result['changed'] = True
+        if code != False and "Invalid" not in str(response) and "failed" not in str(response):
+            result['changed'] = True
         result['res'] = response
     elif action == 'edit':
-        code, response = edit_obj(module, connection)
-        result['changed'] = True
-        result['res'] = response
+        code, data = get_obj(module, connection)
+        found = False
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
+            for entry in data['payload']:
+                if entry['mkey'] == module.params['name']:
+                    if entry['vpath']!=module.params['vpath']:
+                        before['vpath'] = entry['vpath']
+                        after['vpath'] = module.params['vpath']
+                        result['diff'] = {
+                            'before': before,
+                            'after': after
+                        }                     
+                    code, response = edit_obj(module, connection)
+                    result['changed'] = True
+                    result['res'] = response
     elif action == 'get':
         code, response = get_obj(module, connection)
         result['res'] = response
     elif action == 'remove':
         code, data = get_obj(module, connection)
         found = False
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             for entry in data['payload']:
                 if entry['mkey'] in module.params['names']:
                     code, response = remove_obj(module, connection)
                     result['res'] = response
-                    result['changed'] = True
+                    after['deleted'] = module.params
+                    result['diff'] = {
+                        'before': before,
+                        'after': after
+                    }
                     found = True
+                    if isinstance(response, dict) and response.get('payload') == 0:
+                        result['changed'] = True
         if found == False:
             result['changed'] = False
             result['err_msg'] = 'Entry not found.'
-    if 'res' in result.keys() and type(result['res']) is dict\
+    if  isinstance(result, dict) and 'res' in result.keys() and type(result['res']) is dict\
             and type(result['res']['payload']) is int and result['res']['payload'] < 0:
         result['err_msg'] = get_err_msg(connection, result['res']['payload'])
         result['changed'] = False
@@ -192,6 +233,19 @@ def main():
         if result['res']['payload'] == -13 or result['res']['payload'] == -15:
             # cases of "Duplicate entry" and "Entry not found" are not considered as errors.
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+            result['diff'] = {
+                'before': before,
+                'after': after
+            }
+            result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

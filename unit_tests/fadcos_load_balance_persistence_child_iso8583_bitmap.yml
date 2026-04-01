@@ -5,6 +5,30 @@
   connection: httpapi
   gather_facts: false
   tasks:
+
+    - name: Create a real server pool as the test subject
+      fadcos_real_server_pool:
+        action: add
+        name: rs_pool
+        iptype: ipv6
+        vdom: root
+        healthcheck: enable
+        health_check_list:
+                - LB_HLTHCK_HTTPS
+    - name: create content routing
+      fadcos_load_balance_content_routing:
+       action: add
+       name: test16
+       type: l7-content-routing
+       ip: 172.23.133.178/24
+       method_inherit: disable
+       method: LB_METHOD_LEAST_CONNECTION
+       persistence_inherit: enable
+       persistence: LB_PERSIS_HASH_SRC_ADDR
+       schedule_list: disable
+       pool: rs_pool
+       comments: nothings
+
     - name: add
       fadcos_load_balance_persistence_child_iso8583_bitmap:
        action: add

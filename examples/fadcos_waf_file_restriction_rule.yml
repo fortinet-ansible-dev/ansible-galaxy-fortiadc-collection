@@ -1,0 +1,30 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add file_restriction_rule
+      fadcos_waf_file_restriction_rule:
+        action: add
+        name: test_fr1
+        severity: low
+        url: /abb/ccd
+        
+    - name: edit file_restriction_rule
+      fadcos_waf_file_restriction_rule:
+        action: edit
+        name: test_fr1
+        severity: high
+        url: /hggg/ccd
+        
+    - name: get file_restriction_rule
+      fadcos_waf_file_restriction_rule:
+        action: get
+        name: test_fr1
+
+    - name: delete file_restriction_rule
+      fadcos_waf_file_restriction_rule:
+        action: delete
+        name: test_fr1

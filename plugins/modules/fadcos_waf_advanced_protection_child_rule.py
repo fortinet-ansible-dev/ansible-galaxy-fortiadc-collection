@@ -42,38 +42,40 @@ EXAMPLES = """
   connection: httpapi
   gather_facts: false
   tasks:
-    - name: Add WAF Adaptive Learning Entry
-      fadcos_waf_data_leak_prevention:
+    - name: Add WAF advanced protection child rule
+      fadcos_waf_advanced_protection_child_rule:
         action: add
-        learning_time: 9900
-        name: al1
+        name: AP0
+        occurrence_limit: 120
+        occurrence_within: 90
+        percentage_match: 30
+        type: content-scraping
 
-    - name: Get WAF Adaptive Learning Entry
-      fadcos_waf_data_leak_prevention:
-        action: get
-        name: al1
-
-    - name: Edit WAF Adaptive Learning Entry
-      fadcos_waf_data_leak_prevention:
+    - name: edit WAF advanced protection child rule
+      fadcos_waf_advanced_protection_child_rule:
         action: edit
-        name: al1
-        sampling_rate: 75
-        fp_threshold: 2456
-        learning_time: 11111
-        security_action: block
-        status: enable
+        name: AP0
+        occurrence_limit: 150
+        occurrence_within: 100
+        percentage_match: 50
+        id: 1
 
-    - name: Delete 1st WAF Adaptive Learning Entry
-      fadcos_waf_data_leak_prevention:
+    - name: delete WAF advanced_protection
+      fadcos_waf_advanced_protection_child_rule:
         action: delete
-        name: al1
+        name: AP0
+        id: 2
 """
 
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def add_waf_advanced_protection_child_advanced_protection_rule(module, connection):
+    after['added'] = module.params
     pkey = module.params['name']
     content_type = module.params['content_type']
     occurrence_within = module.params['occurrence_within']
@@ -93,11 +95,15 @@ def add_waf_advanced_protection_child_advanced_protection_rule(module, connectio
         }
 
     url = '/api/security_waf_advanced_protection_child_advanced_protection_rule?pkey=' + pkey
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection) :
         vdom = module.params['vdom']
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -106,13 +112,15 @@ def edit_waf_advanced_protection_child_advanced_protection_rule(module, payload,
     pkey = module.params['name']
     mkey = module.params['id']
     url = '/api/security_waf_advanced_protection_child_advanced_protection_rule?pkey=' + pkey + '&mkey=' + mkey
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection) :
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
-    # response["log"] = payload
-    # response["url"] = url
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
     return code, response
 
 
@@ -124,7 +132,7 @@ def get_waf_advanced_protection_child_advanced_protection_rule(module, connectio
     if mkey:
         url += '&mkey=' + mkey
 
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection) :
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
     code, response = connection.send_request(url, payload, 'GET')
@@ -133,16 +141,21 @@ def get_waf_advanced_protection_child_advanced_protection_rule(module, connectio
 
 
 def delete_waf_advanced_protection_child_advanced_protection_rule(module, connection):
+    after['deleted'] = module.params
     pkey = module.params['name']
     mkey = module.params['id']
     payload = {}
     url = '/api/security_waf_advanced_protection_child_advanced_protection_rule?pkey=' + pkey + '&mkey=' + mkey
 
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection) :
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
@@ -153,7 +166,10 @@ def needs_update(module, data):
         if param != 'name' and module.params[param]:
             d_param = param
             d_param = d_param.replace('_', '-')
+            if d_param in data:
+                before[param] = data[d_param]
             data[d_param] = module.params[param] 
+            after[param] = data[d_param]
             res = True
     return res, data
 
@@ -206,7 +222,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -216,6 +232,7 @@ def main():
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
+        module.exit_json(**result)
     elif action == 'add':
         code, response = add_waf_advanced_protection_child_advanced_protection_rule(module, connection)
         result['res'] = response
@@ -225,7 +242,7 @@ def main():
         result['res'] = response
     elif action == 'edit':
         code, data = get_waf_advanced_protection_child_advanced_protection_rule(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             result['failed'] = False
@@ -237,7 +254,7 @@ def main():
             result['changed'] = True
     elif action == 'delete':
         code, data = get_waf_advanced_protection_child_advanced_protection_rule(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_waf_advanced_protection_child_advanced_protection_rule(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -254,6 +271,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15 or result['res']['payload'] == -13:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

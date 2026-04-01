@@ -18,6 +18,7 @@
        schedule_list: disable
        pool: rs_pool
        comments: nothings
+       vdom: root
 
     - name: create
       fadcos_load_balance_content_routing:
@@ -31,6 +32,7 @@
        schedule_list: disable
        pool: rs_pool
        comments: nothings
+       vdom: root
 
     - name: edit
       fadcos_load_balance_content_routing:
@@ -42,14 +44,17 @@
        schedule_list: disable
        pool: rs_pool
        comments: nothings
+       vdom: root
 
     - name: get
       fadcos_load_balance_content_routing:
        action: get
+       vdom: root
 
     - name: delete
       fadcos_load_balance_content_routing:
        action: remove
        names:
             - test1
+       vdom: root
 

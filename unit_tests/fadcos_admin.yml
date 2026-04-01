@@ -33,7 +33,8 @@
        vdom: ['root']
        password: qwerty
        oldpassword: abc789
-       global_admin: false
+       global_admin: true
+       ldap_server: 3
     - name: delete admin
       fadcos_admin:
        action: delete

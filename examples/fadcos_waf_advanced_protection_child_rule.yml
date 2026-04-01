@@ -1,0 +1,41 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF advanced_protection
+      fadcos_waf_advanced_protection:
+        action: add
+        name: AP0
+
+    - name: Add WAF advanced protection child rule
+      fadcos_waf_advanced_protection_child_rule:
+        action: add
+        name: AP0
+        occurrence_limit: 120
+        occurrence_within: 90
+        percentage_match: 30
+        type: content-scraping
+
+    - name: get WAF advanced protection child rule
+      fadcos_waf_advanced_protection_child_rule:
+        action: get
+        name: AP0
+        id: 1
+
+    - name: edit WAF advanced protection child rule
+      fadcos_waf_advanced_protection_child_rule:
+        action: edit
+        name: AP0
+        occurrence_limit: 150
+        occurrence_within: 100
+        percentage_match: 50
+        id: 1
+
+    - name: delete WAF advanced_protection
+      fadcos_waf_advanced_protection_child_rule:
+        action: delete
+        name: AP0
+        id: 2

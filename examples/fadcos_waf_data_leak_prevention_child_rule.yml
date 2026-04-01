@@ -1,0 +1,53 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF data leak prevention
+      fadcos_waf_data_leak_prevention:
+        action: add
+        name: dl1
+
+    - name: Add WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: add
+        name: dl1
+        threshold: 555
+        type: sdt
+        uri: /home/user
+        sensitive_data_type: Email
+
+    - name: Add another WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: add
+        name: dl1
+        threshold: 777
+        type: sensors
+        uri: /url/test
+        sensor: sen2
+
+    - name: get WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: get
+        name: dl1
+        id: 1
+
+    - name: edit WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: edit
+        name: dl1
+        id: 1        
+        threshold: 3453
+        uri: /company/comp1
+
+    - name: get all WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: get
+        name: dl1
+
+    - name: delete WAF data_leak_prevention_child_rule
+      fadcos_waf_data_leak_prevention_child_rule:
+        action: delete
+        name: dl1
+        id: 2

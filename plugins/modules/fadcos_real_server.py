@@ -30,8 +30,17 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
+rep_dict = {
+    'name': 'mkey',
+    'ip': 'address',
+    'ipv6': 'address6'
+}
 
 def add_rs(module, connection):
+    after['added'] = module.params
     name = module.params['name']
     status = module.params['status']
     ip = module.params['ip']
@@ -48,7 +57,11 @@ def add_rs(module, connection):
     if is_vdom_enable(connection):
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -60,7 +73,11 @@ def edit_rs(module, payload, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -84,6 +101,7 @@ def get_rs(module, connection):
 
 
 def delete_rs(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/load_balance_real_server?mkey=' + name
@@ -92,23 +110,34 @@ def delete_rs(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
 
 def needs_update(module, data):
     res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
 
-    if module.params['status'] and module.params['status'] != data['status']:
-        data['status'] = module.params['status']
-        res = True
-    if module.params['ip'] and module.params['ip'] != data['address']:
-        data['address'] = module.params['ip']
-        res = True
-    if module.params['ipv6'] and module.params['ipv6'] != data['address6']:
-        data['address6'] = module.params['ipv6']
-        res = True
     return res, data
 
 
@@ -151,7 +180,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -170,7 +199,7 @@ def main():
         result['res'] = response
     elif action == 'edit':
         code, data = get_rs(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             res = False
@@ -181,7 +210,7 @@ def main():
             result['changed'] = True
     elif action == 'delete':
         code, data = get_rs(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
             code, response = delete_rs(module, connection)
             result['res'] = response
@@ -199,6 +228,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+
     module.exit_json(**result)
 
 

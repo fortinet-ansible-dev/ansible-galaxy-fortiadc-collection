@@ -59,7 +59,7 @@ def is_vdom_enable(connection):
     if type(sys_setting) is int and sys_setting < 0:
         return True
 
-    if 'vdom-admin' not in sys_setting.keys():
+    if not isinstance(sys_setting, dict) or 'vdom-admin' not in sys_setting.keys():
         return True
     elif sys_setting['vdom-admin'] == 'enable':
         return True
@@ -142,3 +142,4 @@ def prepare_multipart_base64(fields):
     del b_data
     parser = email.parser.BytesHeaderParser().parsebytes
     return (parser(headers)['content-type'], b_content)
+

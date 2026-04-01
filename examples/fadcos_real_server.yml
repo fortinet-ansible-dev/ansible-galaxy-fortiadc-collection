@@ -5,10 +5,24 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    # - name: Manage real server
+    #   fadcos_real_server:
+    #    action: add
+    #    name: rs
+    #    ip: 6.6.6.5
+    #    status: enable
+
+
     - name: Manage real server
       fadcos_real_server:
-       action: add
+       action: edit
        name: rs
-       ip: 6.6.6.5
-       status: enable
+       ip: 6.6.8.6
+       vdom: root
+       status: disable
+
+    - name: Manage real server
+      fadcos_real_server:
+       action: get 
+       name: rs
        vdom: root

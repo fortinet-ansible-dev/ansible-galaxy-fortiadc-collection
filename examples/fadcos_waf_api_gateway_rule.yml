@@ -1,0 +1,46 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add waf_api_gateway_rule
+      fadcos_waf_api_gateway_rule:
+        action: add
+        name: test_rule1
+        security_action: alert
+        host: host1
+        host_status: enable
+        location: http-parameter
+        method: GET POST HEAD OPTIONS TRACE CONNECT DELETE PUT PATCH OTHER
+        parameter_name: acc
+        rlimit_period: 60
+        rlimit_reqs: 600
+        rlimit_status: enable
+        severity: low
+        url_pattern: /home/test
+        verification: enable
+
+    - name: edit waf_api_gateway_rule
+      fadcos_waf_api_gateway_rule:
+        action: edit
+        name: test_rule1
+        parameter_name: add
+        severity: high
+        url_pattern: /home/qqq
+
+    - name: Add waf_api_gateway_rule
+      fadcos_waf_api_gateway_rule:
+        action: add
+        name: test_rule1
+        security_action: alert
+
+    - name: get waf_api_gateway_rule
+      fadcos_waf_api_gateway_rule:
+        action: get
+        name: test_rule1
+
+    - name: delete waf_api_gateway_rule
+      fadcos_waf_api_gateway_rule:
+        action: delete
+        name: agr1

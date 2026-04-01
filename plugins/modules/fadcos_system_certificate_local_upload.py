@@ -35,6 +35,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 upload_url = '/api/upload/certificate_local'
 upload_url_automated = '/api/system_certificate_local/automated'
 
@@ -74,6 +77,7 @@ def update_url(module, url):
         return url + '?vdom=false'
 
 def add_obj_certificate(module, connection):
+    after['added'] = module.params
     url = update_url(module, upload_url)
     payload = update_payload(module)
     
@@ -115,6 +119,7 @@ def add_obj_certificate(module, connection):
     return code, response
 
 def add_obj_certificate_from_text(module, connection):
+    after['added'] = module.params
     url = update_url(module, upload_url)
     payload = update_payload(module)
 
@@ -137,6 +142,7 @@ def add_obj_certificate_from_text(module, connection):
     return code, response
 
 def add_obj_pkcs12_certificate(module, connection):
+    after['added'] = module.params
     url = update_url(module, upload_url)
     payload = update_payload(module)
 
@@ -172,6 +178,7 @@ def add_obj_pkcs12_certificate(module, connection):
     return code, response
 
 def add_obj_local_certificate(module, connection):
+    after['added'] = module.params
     url = update_url(module, upload_url)
     payload = update_payload(module)
 
@@ -203,6 +210,7 @@ def add_obj_local_certificate(module, connection):
     return code, response
 
 def add_obj_automated_certificate(module, connection):
+    after['added'] = module.params
     url = update_url(module, upload_url_automated)
     payload = update_payload(module)
     data = {
@@ -229,17 +237,28 @@ def add_obj_automated_certificate(module, connection):
     return request_obj(url, data, connection, 'POST')
 
 def add_obj(module, connection):
-    if module.params['type'] == 'CertKey':
-        if module.params['upload'] == 'text':
-            return add_obj_certificate_from_text(module, connection)
-        else:
-            return add_obj_certificate(module, connection)    
-    elif module.params['type'] == 'PKCS12':
-        return add_obj_pkcs12_certificate(module, connection)
-    elif module.params['type'] == 'LocalCert':
-        return add_obj_local_certificate(module, connection)
-    elif module.params['type'] == 'Automated':
-        return add_obj_automated_certificate(module, connection)
+    after['added'] = module.params
+    if module.check_mode:
+        res = 'Check mode: changes detected.' 
+        code = 0
+        return code, res
+
+    try: 
+        if module.params['type'] == 'CertKey':
+            if module.params['upload'] == 'text':
+                return add_obj_certificate_from_text(module, connection)
+            else:
+                return add_obj_certificate(module, connection)    
+        elif module.params['type'] == 'PKCS12':
+            return add_obj_pkcs12_certificate(module, connection)
+        elif module.params['type'] == 'LocalCert':
+            return add_obj_local_certificate(module, connection)
+        elif module.params['type'] == 'Automated':
+            return add_obj_automated_certificate(module, connection)
+    except FileNotFoundError as e:
+        code = -1
+        res = "Error: Cannot find the files."
+        return code, res
 
 def request_obj(url, payload, connection, action):
     code, response = connection.send_request(url, payload, action)
@@ -282,7 +301,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -291,9 +310,12 @@ def main():
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
-    elif action == 'add':
+        module.exit_json(**result)
+
+    if action == 'add':
         code, response = add_obj(module, connection)
-        result['changed'] = True
+        if code >= 0:
+            result['changed'] = True
         result['res'] = response
 
     if 'res' in result.keys() and type(result['res']) is dict\
@@ -303,6 +325,15 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
+
     module.exit_json(**result)
 
 

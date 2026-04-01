@@ -36,8 +36,12 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def add_rs_pool_member(module, connection):
+    after['added'] = module.params
     pkey = module.params['pool_name']
     member_id = module.params['member_id']
     port = module.params['port']
@@ -86,9 +90,13 @@ def add_rs_pool_member(module, connection):
 
     url = '/api/load_balance_pool_child_pool_member?pkey=' + pkey
     if is_vdom_enable(connection):
-        url += '?vdom=' + vdom
+        url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -102,7 +110,11 @@ def edit_rs_pool_member(module, payload, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -124,6 +136,7 @@ def get_rs_pool_member(module, connection):
 
 
 def delete_rs_pool_member(module, connection):
+    after['deleted'] = module.params
     member_id = module.params['member_id']
     pkey = module.params['pool_name']
     vdom = module.params['vdom']
@@ -132,7 +145,11 @@ def delete_rs_pool_member(module, connection):
     if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
@@ -253,7 +270,7 @@ def main():
     )
     argument_spec.update(fadcos_argument_spec)
     required_if = []
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -272,7 +289,7 @@ def main():
         result['res'] = response
     elif action == 'edit':
         code, data = get_rs_pool_member(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             res = False
@@ -283,7 +300,7 @@ def main():
             result['changed'] = True
     elif action == 'delete':
         code, data = get_rs_pool_member(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
             code, response = delete_rs_pool_member(module, connection)
             result['res'] = response
@@ -301,6 +318,15 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode and action!='get':
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

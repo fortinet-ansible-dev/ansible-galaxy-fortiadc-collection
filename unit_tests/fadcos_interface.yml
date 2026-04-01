@@ -12,7 +12,7 @@
        intf_type: vlan
        interface: port1
        vlanid: 100
-       IPandMask: 22.33.192.241/24
+       IPandMask: 17.16.192.244/24
        allowaccess:
                - snmp
                - http
@@ -50,7 +50,7 @@
     - name: Edit a non-exist interface
       fadcos_interface:
        action: edit
-       name: testport
+       name: testport10086
        mode: static
        intf_type: vlan
        interface: port2

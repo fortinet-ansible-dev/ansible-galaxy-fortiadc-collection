@@ -1,0 +1,35 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+
+    - name: Add cookie signature
+      fadcos_waf_cookie_security:
+        action: add
+        name: ccs
+
+    - name: Add WAF Profile
+      fadcos_waf_cookie_security_child_cookie_list:
+        action: add
+        cookie_security_name: ccs
+        name: cl1
+
+    - name: Add WAF Profile
+      fadcos_waf_cookie_security_child_cookie_list:
+        action: add
+        cookie_security_name: ccs
+        name: cl2
+
+    - name: Get WAF Profile
+      fadcos_waf_cookie_security_child_cookie_list:
+        action: get
+        cookie_security_name: ccs
+        id: 1
+
+    - name: Delete WAF Profile
+      fadcos_waf_cookie_security_child_cookie_list:
+        action: delete
+        cookie_security_name: ccs
+        id: 1

@@ -17,15 +17,32 @@
        health_check_timeout: 5
        health_check_retry: 3
        remote_address: 1.1.1.1
-       source_port: port1
+       source_port: port2
        name: test1
+
+    - name: delete with check_mode
+      fadcos_system_ha_remote_ip_monitor:
+       action: delete 
+       name: test1
+      check_mode: true     
+
+    - name: edit with check_mode
+      fadcos_system_ha_remote_ip_monitor:
+       action: edit 
+       health_check_interval: 15
+       health_check_timeout: 6
+       health_check_retry: 3
+       remote_address: 1.1.1.2
+       source_port: port2
+       name: test1
+      check_mode: true 
 
     - name: edit
       fadcos_system_ha_remote_ip_monitor:
        action: edit 
-       health_check_interval: 10
-       health_check_timeout: 5
+       health_check_interval: 15
+       health_check_timeout: 6
        health_check_retry: 3
        remote_address: 1.1.1.2
-       source_port: port1
+       source_port: port2
        name: test1

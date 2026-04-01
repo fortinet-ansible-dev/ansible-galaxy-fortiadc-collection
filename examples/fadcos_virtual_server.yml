@@ -5,10 +5,37 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    - name: Add the real server pool for test
+      fadcos_real_server_pool:
+        action: add
+        vdom: root
+        name: rs_pool_tst
+        iptype: ipv4
+        vdom: root
+        healthcheck: enable
+        health_check_list:
+                - LB_HLTHCK_HTTPS
+                - LB_HLTHCK_ICMP  
+
+    - name: Add virtual server
+      fadcos_virtual_server:
+       action: add
+       vdom: root
+       name: test_vs
+       status: enable
+       iptype: ipv4
+       ip: 7.7.7.1
+       interface: port3
+       pool: rs_pool_tst
+       port: 80
+       profile: LB_PROF_TCP
+       vstype: l4-load-balance
+
     - name: Manage virtual server
       fadcos_virtual_server:
        action: edit
-       name: test
+       vdom: root
+       name: test_vs
        status: enable
        iptype: ipv4
        ip: 7.7.7.1
@@ -17,3 +44,9 @@
        port: 80
        profile: LB_PROF_TCP
        vstype: l4-load-balance
+
+    - name: delete virtual server
+      fadcos_virtual_server:
+       action: delete
+       vdom: root
+       name: test_vs

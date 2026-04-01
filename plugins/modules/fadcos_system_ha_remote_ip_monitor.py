@@ -30,6 +30,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/system_ha_child_remote_ip_monitor_list'
 
 rep_dict = {
@@ -50,6 +53,7 @@ def replace_key(src_dict, rep_dict):
 
 
 def add_obj(module, connection):
+    after['added'] = module.params
     payload1 = {}
     payload1['data'] = module.params
     payload1['data'].pop('action')
@@ -63,7 +67,11 @@ def add_obj(module, connection):
 def edit_obj(module, payload, connection):
     name = module.params['mkey']
     url = obj_url + '?mkey=' + name
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -80,10 +88,15 @@ def get_obj(module, connection):
 
 
 def delete_obj(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = obj_url + '?mkey=' + name
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
@@ -92,6 +105,8 @@ def combine_dict(src_dict, dst_dict):
     changed = False
     for key in dst_dict:
         if key in src_dict and src_dict[key] is not None and dst_dict[key] != src_dict[key]:
+            before[key] = dst_dict[key]
+            after[key] = src_dict[key]
             dst_dict[key] = src_dict[key]
             changed = True
 
@@ -135,7 +150,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -146,16 +161,17 @@ def main():
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
-    elif action == 'add':
+        module.exit_json(**result)
+
+    code, data = get_obj(module, connection)
+    if action == 'add':
         code, response = add_obj(module, connection)
         result['res'] = response
         result['changed'] = True
     elif action == 'get':
-        code, response = get_obj(module, connection)
-        result['res'] = response
+        result['res'] = data
     elif action == 'edit':
-        code, data = get_obj(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             res = False
@@ -165,8 +181,7 @@ def main():
             result['res'] = response
             result['changed'] = True
     elif action == 'delete':
-        code, data = get_obj(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_obj(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -183,6 +198,15 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15 or result['res']['payload'] == -13:
             result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
+
     module.exit_json(**result)
 
 

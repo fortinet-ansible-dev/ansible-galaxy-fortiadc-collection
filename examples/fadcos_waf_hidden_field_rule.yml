@@ -1,0 +1,44 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: add
+        name: test_hf1
+        severity: low
+        url: /abb/ccd
+        
+    - name: edit hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: edit
+        name: test_hf1
+        severity: high
+        url: /hggg/ccd
+      check_mode: true
+
+    - name: edit hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: edit
+        name: test_hf1
+        severity: high
+        url: /hggg/ccd
+        
+    - name: get hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: get
+        name: test_hf1
+
+    - name: delete hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: delete
+        name: test_hf1
+      check_mode: true
+
+    - name: delete hidden_field_rule
+      fadcos_waf_hidden_field_rule:
+        action: delete
+        name: test_hf1

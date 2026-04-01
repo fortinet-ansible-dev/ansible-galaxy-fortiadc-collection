@@ -1,0 +1,18 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add cookie signature
+      fadcos_waf_cookie_security:
+        action: add
+        name: watk1
+    - name: get cookie signature
+      fadcos_waf_cookie_security:
+        action: get
+        name: watk1
+    - name: delete cookie signature
+      fadcos_waf_cookie_security:
+        action: delete
+        name: watk1 

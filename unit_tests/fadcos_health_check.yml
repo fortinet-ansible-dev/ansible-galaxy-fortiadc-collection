@@ -16,6 +16,7 @@
         interval: 5
         timeout: 3
         hc_type: icmp
+
     - name: Add a duplicated Health Checks
       fadcos_health_check:
         action: add
@@ -27,6 +28,7 @@
         interval: 5
         timeout: 3
         hc_type: icmp
+        
     - name: View Health Checks
       fadcos_health_check:
         action: get

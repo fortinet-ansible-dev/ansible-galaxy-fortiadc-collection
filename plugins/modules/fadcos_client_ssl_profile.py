@@ -216,7 +216,11 @@ fadcos_client_ssl_profile:
   type: string
 """
 
+before = {}
+after = {}
+
 def add_client_ssl_profile(module, connection):
+    after['added'] = module.params
 
     payload = {
         'mkey': module.params['name'],
@@ -257,7 +261,11 @@ def add_client_ssl_profile(module, connection):
         vdom = module.params['vdom']
         url += '?vdom=' + vdom
     
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -279,6 +287,7 @@ def get_client_ssl_profile(module, connection):
     return code, response
 
 def delete_client_ssl_profile(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/load_balance_client_ssl_profile?mkey=' + name
@@ -287,7 +296,11 @@ def delete_client_ssl_profile(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
     return code, response
 
 def edit_client_ssl_profile(module, payload, connection):
@@ -298,7 +311,11 @@ def edit_client_ssl_profile(module, payload, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
     return code, response
 
 def update_client_ssl_profile(module, data):
@@ -382,7 +399,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
     connection = Connection(module._socket_path)
 
     action = module.params['action']
@@ -401,7 +418,7 @@ def main():
         result['ok'] = True
     elif action == 'edit':
         code, data = get_client_ssl_profile(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = update_client_ssl_profile(module, data['payload'])
         else:
             res = False
@@ -412,7 +429,7 @@ def main():
             result['changed'] = True
     elif action == 'delete':
         code, data = get_client_ssl_profile(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_client_ssl_profile(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -429,6 +446,15 @@ def main():
             result['failed'] = True
             if result['res']['payload'] == -15:
                 result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
+
     module.exit_json(**result)
 
 if __name__ == '__main__':

@@ -31,9 +31,14 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/system_snmp_user'
 
-edit_dict = {
+rep_dict = {
+    'name': 'mkey',
+    'names': 'mkeys',
 }
 
 def update_payload(module):
@@ -56,52 +61,109 @@ def update_payload(module):
 
     return payload
 
+
+def module_err_exit(module, mesg):
+    result = {}
+    result['err_msg'] = mesg
+    result['failed'] = True
+    result['changed'] = False
+    module.exit_json(**result)
+
+check_mode_enabled = False
+
+def send_request(url, payload, connection, action):
+    if check_mode_enabled:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, action)
+    return code, response
+
 def get_obj(module, connection):
     payload = {}
     url = obj_url
+    mkey = module.params['name']
+    if mkey:
+        url = obj_url + '?mkey=' + mkey
+    else: 
+        url = obj_url
 
-    return request_obj(url, payload, connection, 'GET')
+    if is_vdom_enable(connection) and module.params['vdom']:
+        if mkey:
+            url += '&vdom=' + module.params['vdom']
+        else:
+            url += '?vdom=' + module.params['vdom']    
+    return connection.send_request(url, payload, 'GET')
 
 def add_obj(module, connection):
+    after['added'] = module.params
+    vdom = module.params['vdom']
     url = obj_url
     payload = update_payload(module)
-
-    return request_obj(url, payload, connection, 'POST')
+    if is_vdom_enable(connection) and module.params['vdom']:
+        url += '?vdom=' + vdom
+    return send_request(url, payload, connection, 'POST')
 
 def remove_obj(module, connection):
+    after['deleted'] = module.params['names']
     url = obj_url + '/batch_remove'
     payload = update_payload(module)
+    if is_vdom_enable(connection) and module.params['vdom']:
+        url += '?vdom=' + module.params['vdom']
+    return send_request(url, payload, connection, 'POST')
 
-    return request_obj(url, payload, connection, 'POST')
+def needs_update(module, data):
+    res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
 
-def edit_obj(module, connection):
-    payload = update_payload(module)
+    return res, data
+
+
+def edit_obj(module, payload, connection):
     mkey = payload['mkey']
-    url = obj_url + '?mkey=' + mkey
+    if mkey:
+        url = obj_url + '?mkey=' + mkey
+    else: 
+        return module_err_exit(module, 'edit action needs \'name\' not to be empty.')
+    if is_vdom_enable(connection) and module.params['vdom']:
+        url += '&vdom=' + module.params['vdom']
+    
+    return send_request(url, payload, connection, 'PUT')
 
-    return request_obj(url, payload, connection, 'PUT')
-
-def request_obj(url, payload, connection, action):
-    code, response = connection.send_request(url, payload, action)
-
-    return code, response
 
 def param_check(module, connection):
     res = False
     action = module.params['action']
-    err_msg = ''
+    err_msg = []
     if (action == 'get' or action == 'add' or action == 'remove' or action == 'edit'):
         res = True
     else:
         res = False
-        err_msg = action + 'is not supported'
+        err_msg.append('action \''+action + '\' is not supported')
 
     return res, err_msg
 
 def main():
+    global check_mode_enabled
     argument_spec = dict(
         action=dict(type='str', required=True),
         name=dict(type='str'),
+        vdom=dict(type='str'),
         security_level=dict(type='str'),
         auth_proto=dict(type='str'),
         auth_pwd=dict(type='str'),
@@ -119,7 +181,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -128,9 +190,10 @@ def main():
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
-    elif action == 'get':
-        code, response = get_obj(module, connection)
-        result['res'] = response
+        module.exit_json(**result)
+    code, data = get_obj(module, connection)
+    if action == 'get':
+        result['res'] = data
     elif action == 'add':
         code, response = add_obj(module, connection)
         result['changed'] = True
@@ -142,9 +205,15 @@ def main():
         result['changed'] = True
         result['res'] = response
     elif action == 'edit':
-        code, response = edit_obj(module, connection)
-        result['changed'] = True
-        result['res'] = response
+        if 'payload' in data.keys() and data['payload'] and isinstance(data['payload'], dict):
+            res, new_data = needs_update(module, data['payload'])
+        else:
+            res = False
+            result['err_msg'] = 'Entry not found.'
+        if res:
+            code, response = edit_obj(module, new_data, connection)
+            result['res'] = response
+            result['changed'] = True
 
     if 'res' in result.keys() and type(result['res']) is dict\
             and type(result['res']['payload']) is int and result['res']['payload'] < 0:
@@ -153,6 +222,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -13 or result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

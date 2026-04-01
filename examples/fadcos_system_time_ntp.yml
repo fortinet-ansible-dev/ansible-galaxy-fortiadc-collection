@@ -5,12 +5,17 @@
   connection: httpapi
   gather_facts: false
   tasks:
+
+    - name: get
+      fadcos_system_time_ntp:
+       action: get
+
     - name: edit
       fadcos_system_time_ntp:
        action: edit
-       ntpserver: pool.ntp.org
        ntpsync: enable
-       syncinterval: '60'
+       syncinterval: '40'
+       
 
     - name: get
       fadcos_system_time_ntp:

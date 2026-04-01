@@ -1,0 +1,62 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add cors_protection
+      fadcos_waf_cors_protection:
+        action: add
+        name: test_cp
+
+    - name: edit cors_protection
+      fadcos_waf_cors_protection:
+        action: edit
+        name: test_cp
+        status: enable  
+
+    - name: Add cors_headers
+      fadcos_waf_cors_headers:
+        action: add
+        name: cor1
+
+    - name: Add WAF cors_protection_rule_list entry
+      fadcos_waf_cors_protection_rule_list:
+        action: add
+        name: test_cp
+        allowed_credentials: false
+        allowed_headers: enable
+        allowed_headers_list: cor1
+        allowed_max_age: 0
+        allowed_methods: enable
+        allowed_origin: awo
+        apply_to_all_cors_traffic: disable
+        exposed_headers: enable
+        exposed_headers_list: cor1
+        host: jjjjj
+        host_status: enable
+        insert_allowed_credentials: enable
+        insert_max_age: enable
+        methods: GET HEAD TRACE CONNECT
+        request_url: /test/jjjjj
+
+    - name: edit WAF cors_protection_rule_list entry
+      fadcos_waf_cors_protection_rule_list:
+        action: edit
+        name: test_cp
+        id: 1
+        allowed_credentials: false
+        host: zzzz
+        request_url: /test/zzzzz
+
+    - name: get WAF cors_protection_rule_list entry
+      fadcos_waf_cors_protection_rule_list:
+        action: get
+        name: test_cp
+        id: 1
+
+    - name: delete WAF cors_protection_rule_list entry
+      fadcos_waf_cors_protection_rule_list:
+        action: delete
+        name: test_cp
+        id: 1

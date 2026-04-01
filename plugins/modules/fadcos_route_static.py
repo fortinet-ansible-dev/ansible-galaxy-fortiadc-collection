@@ -30,8 +30,17 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
+rep_dict = {
+    'desination':'dest',
+    'gateway':'gw',
+    'route_id':'mkey'
+}
 
 def add_route_static(module, connection):
+    after['added'] = module.params
     route_id = module.params['route_id']
     desination = module.params['desination']
     gateway = module.params['gateway']
@@ -48,7 +57,11 @@ def add_route_static(module, connection):
     if is_vdom_enable(connection):
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -60,7 +73,11 @@ def edit_route_static(module, payload, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -83,6 +100,7 @@ def get_route_static(module, connection):
 
 
 def delete_route_static(module, connection):
+    after['deleted'] = module.params
     name = module.params['route_id']
     payload = {}
     url = '/api/router_static?mkey=' + name
@@ -91,23 +109,33 @@ def delete_route_static(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
-
 def needs_update(module, data):
     res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
 
-    if module.params['desination'] and module.params['desination'] != data['dest']:
-        data['dest'] = module.params['desination']
-        res = True
-    if module.params['gateway'] and module.params['gateway'] != data['gw']:
-        data['gw'] = module.params['gateway']
-        res = True
-    if module.params['distance'] and module.params['distance'] != data['distance']:
-        data['distance'] = module.params['distance']
-        res = True
     return res, data
 
 
@@ -155,7 +183,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = []
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -174,7 +202,7 @@ def main():
         result['res'] = response
     elif action == 'edit':
         code, data = get_route_static(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             res = False
@@ -185,7 +213,7 @@ def main():
             result['res'] = response
     elif action == 'delete':
         code, data = get_route_static(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
             code, response = delete_route_static(module, connection)
             result['res'] = response
@@ -203,6 +231,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+
     module.exit_json(**result)
 
 

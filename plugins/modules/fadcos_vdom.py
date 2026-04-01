@@ -37,13 +37,20 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def add_vdom(module, connection):
+    after['added'] = module.params
     name = module.params['name']
 
     payload = {'mkey': name}
-
-    code, response = connection.send_request('/api/vdom', payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request('/api/vdom', payload)
 
     return code, response
 
@@ -53,7 +60,11 @@ def add_vdom(module, connection):
 def edit_vdom(module, payload, connection):
     name = module.params['name']
     url = '/api/vdom?mkey=' + name
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 '''
@@ -70,10 +81,15 @@ def get_vdom(module, connection):
 
 
 def delete_vdom(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/vdom?mkey=' + name
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
@@ -86,7 +102,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
     action = module.params['action']
@@ -103,8 +119,8 @@ def main():
         result['res'] = response
     elif action == 'delete':
         code, response = delete_vdom(module, connection)
-        result['changed'] = True
-        if 'payload' in response.keys() and type(response['payload']) is int and response['payload'] < 0:
+        result['res'] = response
+        if isinstance(response,dict) and 'payload' in response.keys() and type(response['payload']) is int and response['payload'] < 0:
             response['payload'] = 0
             result['changed'] = False         
 
@@ -119,6 +135,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -13 or result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

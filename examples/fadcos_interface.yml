@@ -1,23 +1,67 @@
 ---
 - name:
   hosts: all
-  vars:
-        ansible_network_os: fadcos
-        ansible_user: ansible
-        ansible_password: ansible
   connection: httpapi
   gather_facts: false
   tasks:
+
+    # - name: delete interface
+    #   fadcos_interface:
+    #    action: delete
+    #    name: testport
+
+    # - name: Manage interface
+    #   fadcos_interface:
+    #    action: add
+    #    name: testport
+    #    mode: static
+    #    intf_type: vlan
+    #    interface: port5
+    #    vlanid: 100
+    #    IPandMask: 123.23.3.12/24
+    #    allowaccess:
+    #            - snmp
+    #    #vdom: root
+
+    # # - name: Add interface again to test idempotency
+    # #   fadcos_interface:
+    # #    action: add
+    # #    name: testport
+    # #    mode: static
+    # #    intf_type: vlan
+    # #    interface: port4
+    # #    vlanid: 100
+    # #    IPandMask: 17.16.192.241/24
+    # #    allowaccess:
+    # #            - snmp
+    # #            - http
+
+    # - name: Edit interface
+    #   fadcos_interface:
+    #    action: edit
+    #    name: testport
+    #    mode: static
+    #    intf_type: vlan
+    #    IPandMask: 83.23.3.241/24
+    #    allowaccess:
+    #            - http
+
+    # - name: get interface
+    #   fadcos_interface:
+    #    action: get
+    #    name: testport
+
+
     - name: Manage interface
       fadcos_interface:
+       action: edit
+       name: port5
+       IPandMask: 12.34.2.3/24
+       allowaccess: https
+       #vdom: root
+
+    - name: get interface
+      fadcos_interface:
        action: get
-       name: testport
-       mode: static
-       intf_type: vlan
-       interface: port5
-       vlanid: 100
-       IPandMask: 123.23.3.12/24
-       allowaccess:
-               - snmp
-               - http
+       name: port5
        #vdom: root

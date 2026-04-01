@@ -30,19 +30,47 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
+rep_dict = {
+}
+
 obj_url = '/api/system_time_manual'
+edit_url = '/api/system_time_ntp?mkey=-1'
 
 edit_dict = {
 }
 
 def update_payload(module):
     payload = {
-    'ntpserver': module.params['ntpserver'],
     'ntpsync': module.params['ntpsync'],
     'syncinterval': module.params['syncinterval'],
     }
 
     return payload
+
+
+def needs_update(module, data):
+    res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
+
+    return res, data
 
 def get_obj(module, connection):
     payload = {}
@@ -50,7 +78,7 @@ def get_obj(module, connection):
 
     return request_obj(url, payload, connection, 'GET')
 
-def edit_obj(module, connection):
+def edit_obj(module, new_data, connection):
     url = obj_url
     payload = update_payload(module)
 
@@ -76,26 +104,30 @@ def param_check(module, connection):
 def main():
     argument_spec = dict(
         action=dict(type='str', required=True),
-        ntpserver=dict(type='str'),
-        ntpsync=dict(type='str', default='enable'),
-        syncinterval=dict(type='str', default='60'),
+        ntpsync=dict(type='str'),
+        syncinterval=dict(type='str'),
     )
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
     connection = Connection(module._socket_path)
     param_pass, param_msg = param_check(module, connection)
+    code, response = get_obj(module, connection)
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
-    elif action == 'get':
-        code, response = get_obj(module, connection)
     elif action == 'edit':
-        code, response = edit_obj(module, connection)
+        data = response
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and isinstance(data['payload'], dict):
+            res, new_data = needs_update(module, data['payload'])
+        else:
+            res = False
+            result['err_msg'] = 'Entry not found.'
+        code, response = edit_obj(module, new_data, connection)
         result['changed'] = True
     result['res'] = response
     
@@ -108,6 +140,15 @@ def main():
         result['err_msg'] = get_err_msg(connection, result['res']['payload'])
         result['changed'] = False
         result['failed'] = True
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

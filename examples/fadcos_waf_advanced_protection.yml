@@ -1,0 +1,21 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF advanced_protection
+      fadcos_waf_advanced_protection:
+        action: add
+        name: wdp1
+
+    - name: get WAF advanced_protection
+      fadcos_waf_advanced_protection:
+        action: get
+        name: wdp1
+
+    - name: delete WAF advanced_protection
+      fadcos_waf_advanced_protection:
+        action: delete
+        name: wdp1

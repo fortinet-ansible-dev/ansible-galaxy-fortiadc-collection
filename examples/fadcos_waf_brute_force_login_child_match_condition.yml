@@ -1,0 +1,44 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add brute_force_login
+      fadcos_waf_brute_force_login:
+        action: add
+        name: b1
+        security_action: alert
+        severity: medium
+        status: enable
+        comments: For test
+
+    - name: Add brute_force_login_child_match_condition
+      fadcos_waf_brute_force_login_child_match_condition:
+        action: add
+        name: b1
+        failed_code: 666
+        host_name: qqqq
+        host_status: enable
+        url: /zzzz/yyy/dd
+        limit: 7777
+
+    - name: edit brute_force_login_child_match_condition
+      fadcos_waf_brute_force_login_child_match_condition:
+        action: edit
+        name: b1
+        id: 1
+        failed_code: 333
+        limit: 4444
+
+    - name: get brute_force_login_child_match_condition
+      fadcos_waf_brute_force_login_child_match_condition:
+        action: get
+        name: b1
+        id: 1
+
+    - name: delete brute_force_login_child_match_condition
+      fadcos_waf_brute_force_login_child_match_condition:
+        action: delete
+        name: b1
+        id: 2

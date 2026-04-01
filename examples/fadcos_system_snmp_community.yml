@@ -5,31 +5,33 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    - name: remove to prepare the test and check whether removing non-existent stuff causes error
+      fadcos_system_snmp_community:
+       action: remove
+       id_list:
+            - '1'
+            - '2'
+            - '3'
+            - '4'
+            - '5'
+       vdom: root
+
+    - name: get
+      fadcos_system_snmp_community:
+       action: get
+       vdom: root
+
     - name: add
       fadcos_system_snmp_community:
        action: add
        name: test
        query_v1_port: '161'
        query_v1_status: enable
-       query_v2c_port: '161'
-       query_v2c_status: enable
-
-
-    - name: edit
-      fadcos_system_snmp_community:
-       action: edit
-       id: '1'
-       query_v1_port: '162'
-       query_v1_status: disable
        query_v2c_port: '162'
-       query_v2c_status: disable
+       query_v2c_status: enable
+       vdom: root
 
     - name: get
       fadcos_system_snmp_community:
        action: get
 
-    - name: remove
-      fadcos_system_snmp_community:
-       action: remove
-       id_list:
-            - '1'

@@ -5,6 +5,20 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    - name: create content routing
+      fadcos_load_balance_content_routing:
+       action: add
+       name: test
+       type: l7-content-routing
+       ip: 172.23.133.178/24
+       method_inherit: disable
+       method: LB_METHOD_LEAST_CONNECTION
+       persistence_inherit: enable
+       persistence: LB_PERSIS_HASH_SRC_ADDR
+       schedule_list: disable
+       pool: rs_pool
+       comments: nothings
+
     - name: create
       fadcos_load_balance_content_routing_child_match_condition:
        action: add
@@ -24,6 +38,12 @@
        ignorecase: enable
        reverse: enable
        object: http-request-rul
+
+    - name: get 1
+      fadcos_load_balance_content_routing_child_match_condition:
+       action: get
+       name: test
+       id: 1
 
     - name: edit
       fadcos_load_balance_content_routing_child_match_condition:

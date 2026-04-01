@@ -71,8 +71,12 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def add_waf_credential_stuffing_defense(module, connection):
+    after['added'] = module.params
     payload = {
         'action': module.params['security_action'],
         'mkey': module.params['name'],
@@ -80,11 +84,15 @@ def add_waf_credential_stuffing_defense(module, connection):
         'status': module.params['status'], 
         }
     url = '/api/security_waf_credential_stuffing_defense'
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 200
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -96,7 +104,7 @@ def get_waf_credential_stuffing_defense(module, connection):
     if name:
         url += '?mkey=' + name
 
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
     code, response = connection.send_request(url, payload, 'GET')
@@ -109,33 +117,45 @@ def needs_update(module, data):
         d_param = param
         if param == 'security_action':
             d_param = 'action'
-        data[d_param] = module.params[param] 
+        if d_param in data:
+            before[d_param] = data[d_param]
+        data[d_param] = module.params[param]
+        after[d_param] = data[d_param]
         res = True
     return res, data
 
 def edit_waf_credential_stuffing_defense(module, payload, connection):
     name = module.params['name']
     url = '/api/security_waf_credential_stuffing_defense?mkey=' + name
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 200
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
     # response["log"] = payload
     # response["url"] = url
     return code, response
 
 
 def delete_waf_credential_stuffing_defense(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/security_waf_credential_stuffing_defense?mkey=' + name
 
-    if is_vdom_enable(connection) and not is_global_admin(connection):
+    if is_vdom_enable(connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 200
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
     return code, response
 
 
@@ -172,7 +192,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -182,16 +202,19 @@ def main():
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
-    elif action == 'add':
+        module.exit_json(**result)
+    code, data = get_waf_credential_stuffing_defense(module, connection)
+    if action == 'add':
         code, response = add_waf_credential_stuffing_defense(module, connection)
         result['res'] = response
-        result['changed'] = True
+        if code == 200:
+            result['changed'] = True
     elif action == 'get':
         code, response = get_waf_credential_stuffing_defense(module, connection)
         result['res'] = response
     elif action == 'edit':
         code, data = get_waf_credential_stuffing_defense(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             result['failed'] = False
@@ -200,13 +223,15 @@ def main():
         if res:
             code, response = edit_waf_credential_stuffing_defense(module, new_data, connection)
             result['res'] = response
-            result['changed'] = True
+            if code == 200:
+                result['changed'] = True
     elif action == 'delete':
         code, data = get_waf_credential_stuffing_defense(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_waf_credential_stuffing_defense(module, connection)
             result['res'] = response
-            result['changed'] = True
+            if code == 200:
+                result['changed'] = True
         else:
             result['failed'] = False
     else:
@@ -220,6 +245,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15 or result['res']['payload'] == -13:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

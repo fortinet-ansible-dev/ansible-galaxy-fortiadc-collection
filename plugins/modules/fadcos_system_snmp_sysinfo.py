@@ -53,9 +53,12 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/system_snmp_sysinfo'
 
-edit_dict = {
+rep_dict = {
 }
 
 def update_payload(module):
@@ -68,16 +71,37 @@ def update_payload(module):
 
     return payload
 
+
+def needs_update(module, data):
+    res = False
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
+
+    return res, data
+
+
 def get_obj(module, connection):
     payload = {}
     url = obj_url
 
     return request_obj(url, payload, connection, 'GET')
 
-def edit_obj(module, connection):
+def edit_obj(payload, connection):
     url = obj_url +'?mkey=-1'
-    payload = update_payload(module)
-
     return request_obj(url, payload, connection, 'PUT')
 
 def request_obj(url, payload, connection, action):
@@ -108,7 +132,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -117,19 +141,33 @@ def main():
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
-    elif action == 'get':
-        code, response = get_obj(module, connection)
-        result['res'] = response
+        module.exit_json(**result)
+    code, data = get_obj(module, connection)
+    if action == 'get':
+        result['res'] = data
     elif action == 'edit':
-        code, response = edit_obj(module, connection)
-        result['changed'] = True
-        result['res'] = response
+        update, update_data = needs_update(module, data['payload'])
+        if update:
+            if module.check_mode:
+                result['res'] = 'Checkmode: change detected'
+                result['changed'] = True
+            else:
+                code, response = edit_obj(update_data, connection)    
+                result['changed'] = True
+                result['res'] = response
+        
 
     if 'res' in result.keys() and type(result['res']) is dict\
             and type(result['res']['payload']) is int and result['res']['payload'] < 0:
         result['err_msg'] = get_err_msg(connection, result['res']['payload'])
         result['changed'] = False
         result['failed'] = True
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

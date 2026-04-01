@@ -458,8 +458,11 @@ fadcos_health_check:
   type: string
 """
 
-def add_hc(module, connection):
+before = {}
+after = {}
 
+def add_hc(module, connection):
+	after['added'] = module.params
 	payload = {
 		'addr_type': module.params['addr_type'],
 		'agent-type': module.params['agent_type'],
@@ -543,8 +546,12 @@ def add_hc(module, connection):
 	if is_vdom_enable(connection):
 		vdom = module.params['vdom']
 		url += '?vdom=' + vdom
-	
-	code, response = connection.send_request(url, payload)
+
+	if module.check_mode:
+		code = 0
+		response = 'Check mode: changes detected.' 
+	else:
+		code, response = connection.send_request(url, payload)
 
 	return code, response
 
@@ -569,12 +576,15 @@ def delete_hc(module, connection):
 	name = module.params['name']
 	payload = {}
 	url = '/api/system_health_check?mkey=' + name
-
+	after['deleted'] = module.params
 	if is_vdom_enable(connection):
 		vdom = module.params['vdom']
 		url += '&vdom=' + vdom
-
-	code, response = connection.send_request(url, payload, 'DELETE')
+	if module.check_mode:
+		code = 0
+		response = 'Check mode: changes detected.' 
+	else:
+		code, response = connection.send_request(url, payload, 'DELETE')
 	return code, response
 
 def edit_hc(module, payload, connection):
@@ -633,10 +643,14 @@ def update_hc(module, data):
 		if key in data:
 			if key == 'ssl-ciphers':
 				if list_need_update(module.params[param], data[key]):
+					before[key] =data[key] 
 					data[key] = list_to_str(module.params[param])
+					after[key] = data[key]
 					res = True
 			else:
 				if module.params[param] != data[key]:
+					before[key] = data[key]
+					after[key] = module.params[param]
 					data[key] = module.params[param]
 					res = True
 
@@ -648,17 +662,17 @@ def param_check(module, connection):
 	err_msg = []
 
 	if (action == 'add' or action == 'edit' or action == 'delete') and not module.params['name']:
-	    err_msg.append('The health check name is required.')
-	    res = False
+		err_msg.append('The health check name is required.')
+		res = False
 	if action == 'add' and not module.params['hc_type']:
-	    err_msg.append('The health check type is required.')
-	    res = False
+		err_msg.append('The health check type is required.')
+		res = False
 	if is_vdom_enable(connection) and not module.params['vdom']:
-	    err_msg.append('The vdom is enabled in system setting, vdom must be set.')
-	    res = False
+		err_msg.append('The vdom is enabled in system setting, vdom must be set.')
+		res = False
 	elif is_vdom_enable(connection) and module.params['vdom'] and not is_user_in_vdom(connection, module.params['vdom']):
-	    err_msg.append('The user can not access the vdom ' + module.params['vdom'])
-	    res = False
+		err_msg.append('The user can not access the vdom ' + module.params['vdom'])
+		res = False
 
 	return res, err_msg
 
@@ -746,7 +760,7 @@ def main():
 	argument_spec.update(fadcos_argument_spec)
 
 	required_if = [('name')]
-	module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
+	module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
 	connection = Connection(module._socket_path)
 
 	action = module.params['action']
@@ -755,17 +769,19 @@ def main():
 	if not param_pass:
 		result['err_msg'] = param_err
 		result['failed'] = True
-	elif action == 'add':
+		module.exit_json(**result)
+
+	code, data = get_hc(module, connection)
+	if action == 'add':
 		code, response = add_hc(module, connection)
 		result['res'] = response
 		result['changed'] = True
 	elif action == 'get':
-		code, response = get_hc(module, connection)
-		result['res'] = response
+		result['res'] = data
 		result['ok'] = True
 	elif action == 'edit':
-		code, data = get_hc(module, connection)
-		if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+		res = False
+		if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
 			res, new_data = update_hc(module, data['payload'])
 		else:
 			res = False
@@ -775,8 +791,7 @@ def main():
 			result['res'] = response
 			result['changed'] = True
 	elif action == 'delete':
-		code, data = get_hc(module, connection)
-		if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+		if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
 			code, response = delete_hc(module, connection)
 			result['res'] = response
 			result['changed'] = True
@@ -793,6 +808,16 @@ def main():
 			result['failed'] = True
 			if result['res']['payload'] == -15:
 				result['failed'] = False
+
+	if 'changed' in result.keys() and result['changed'] == True:
+		result['diff'] = {
+            'before': before,
+            'after': after
+        }
+	else:
+		if module.check_mode:
+			result['res'] = 'Check mode: no changes detected.'  
+
 	module.exit_json(**result)
 
 if __name__ == '__main__':

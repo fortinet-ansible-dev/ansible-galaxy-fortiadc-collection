@@ -10,7 +10,7 @@
        action: add
        name: test2
        vpath: /fortiadc_error_page/
-       srcfile: errpage.tar
+       srcfile: error_page.zip
 
     - name: add a duplicated test subject to test idempotency
       fadcos_error_page:

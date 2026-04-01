@@ -30,12 +30,17 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/system_vdom'
 
 edit_dict = {
 }
 
-def update_payload(module):
+check_mode_enabled = False
+
+def update_payload(module,data):
     payload = {
     'name': module.params['name'],
     'mkey': module.params['name'],
@@ -56,19 +61,31 @@ def update_payload(module):
     'ug': module.params['user_group'],
     }
 
+    for key in payload:
+        if key not in data:
+            continue
+        if payload[key]!=data[key]:
+            after[key] = payload[key]
+            before[key] = data[key]
+    
     return payload
 
 def get_obj(module, connection):
     payload = {}
-    url = obj_url + '/get_vdom_rlimit?vdom=' + module.params['name'] + '&pkey=' + module.params['name'] 
-
+    url = obj_url + '/get_vdom_rlimit?vdom=' + module.params['name'] + '&pkey=' + module.params['name']     
     return request_obj(url, payload, connection, 'GET')
 
-def edit_obj(module, connection):
-    payload = update_payload(module)
+def edit_obj(module, data, connection):
+    payload = update_payload(module, data)
     url = obj_url + '?vdom=' + module.params['name'] + '&pkey=' + module.params['name'] + '&mkey=' + module.params['name']
 
-    return request_obj(url, payload, connection, 'PUT')
+    if check_mode_enabled:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, responese = request_obj(url, payload, connection, 'PUT')
+
+    return code, responese
 
 def request_obj(url, payload, connection, action):
     code, response = connection.send_request(url, payload, action)
@@ -87,6 +104,7 @@ def param_check(module, connection):
     return res, err_msg
 
 def main():
+    global check_mode_enabled
     argument_spec = dict(
         action=dict(type='str', required=True),
         name=dict(type='str', required=True),
@@ -109,7 +127,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -118,13 +136,19 @@ def main():
     if not param_pass:
         result['failed'] = True
         result['err_msg'] = param_msg
-    elif action == 'get':
-        code, response = get_obj(module, connection)
+        module.exit_json(**result)
+
+    code, response = get_obj(module, connection)
+    if action == 'get':
         result['res'] = response
     elif action == 'edit':
-        code, response = edit_obj(module, connection)
-        result['changed'] = True
-        result['res'] = response
+        if isinstance(response, dict) and 'payload' in response and response['payload'] is not None:
+            code, response = edit_obj(module, response['payload'], connection)
+            if code == 200:
+                result['changed'] = True
+            result['res'] = response
+        else:
+            result['res'] = "Entry not found."
 
     if 'res' in result.keys() and type(result['res']) is dict\
             and type(result['res']['payload']) is int and result['res']['payload'] < 0:
@@ -133,6 +157,12 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -289 or result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

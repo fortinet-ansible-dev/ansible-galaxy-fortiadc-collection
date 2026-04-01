@@ -100,7 +100,15 @@ fadcos_local_cert_group:
   type: string
 """
 
+before = {}
+after = {}
+rep_dict = {
+    'name':'mkey'
+}
+
+
 def add_local_cert_group(module, connection):
+    after['added'] = module.params
 
     payload = {'mkey': module.params['name']}
 
@@ -109,10 +117,15 @@ def add_local_cert_group(module, connection):
         vdom = module.params['vdom']
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
     return code, response
 
 def add_local_cert_group_member(module, connection):
+    after['added'] = module.params
     name = module.params['name']
 
     payload = {
@@ -128,7 +141,11 @@ def add_local_cert_group_member(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
     return code, response
 
 def get_local_cert_group(module, connection):
@@ -161,6 +178,7 @@ def get_local_cert_group_member(module, connection):
     return code, response
 
 def delete_local_cert_group(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/system_certificate_local_cert_group?mkey=' + name
@@ -169,10 +187,15 @@ def delete_local_cert_group(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
     return code, response
 
 def delete_local_cert_group_member(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     member_id = module.params['member_id']
     payload = {}
@@ -182,7 +205,11 @@ def delete_local_cert_group_member(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
     return code, response
 
 def param_check(module, connection):
@@ -221,7 +248,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
     connection = Connection(module._socket_path)
 
     action = module.params['action']
@@ -230,6 +257,7 @@ def main():
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
+        module.exit_json(**result)
     elif action == 'add_group':
         code, response = add_local_cert_group(module, connection)
         result['res'] = response
@@ -240,7 +268,7 @@ def main():
         result['ok'] = True
     elif action == 'delete_group':
         code, data = get_local_cert_group(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_local_cert_group(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -248,7 +276,7 @@ def main():
             result['failed'] = False
     elif action == 'add_member':
         code, data = get_local_cert_group(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = add_local_cert_group_member(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -256,7 +284,7 @@ def main():
             result['err_msg'] = 'Group Entry not found.'
     elif action == 'get_member':
         code, data = get_local_cert_group(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = get_local_cert_group_member(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -264,7 +292,7 @@ def main():
             result['err_msg'] = 'Group Entry not found.'
     elif action == 'delete_member':
         code, data = get_local_cert_group(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if module.check_mode == False and 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
             code, response = delete_local_cert_group_member(module, connection)
             if 'payload' in response.keys() and response['payload'] and type(response['payload']) is int:
                 response['payload'] = 0
@@ -283,6 +311,15 @@ def main():
             result['failed'] = True
             if result['res']['payload'] == -15 or result['res']['payload'] == -13 or result['res']['payload'] == -156:
                 result['failed'] = False
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode and action!='get':
+           result['res'] = 'Check mode: no changes detected.'  
+
     module.exit_json(**result)
 
 if __name__ == '__main__':

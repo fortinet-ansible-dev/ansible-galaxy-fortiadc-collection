@@ -1,0 +1,62 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: add
+        learning_time: 9900
+        name: al1
+
+    - name: Get WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: get
+        name: al1
+
+    - name: Add WAF another Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: add
+        name: al2
+        security_action: captcha
+        fp_threshold: 500
+        learning_time: 12000
+        sampling_rate: 70
+        status: enable
+
+    - name: Get WAF Adaptive Learning Entry 1
+      fadcos_waf_adaptive_learning:
+        action: get
+        name: al2
+
+    - name: Edit WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: edit
+        name: al2
+        sampling_rate: 75
+        fp_threshold: 2456
+        learning_time: 11111
+        security_action: block
+        status: enable
+
+    - name: Get WAF Adaptive Learning Entry 2
+      fadcos_waf_adaptive_learning:
+        action: get
+        name: al2
+
+    - name: Get non-existant WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: get
+        name: al_none
+
+    - name: Delete 1st WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: delete
+        name: al1
+
+    - name: Delete 2nd WAF Adaptive Learning Entry
+      fadcos_waf_adaptive_learning:
+        action: delete
+        name: al2

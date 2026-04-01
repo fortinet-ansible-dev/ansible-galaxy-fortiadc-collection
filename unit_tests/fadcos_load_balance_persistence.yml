@@ -6,109 +6,109 @@
   gather_facts: false
   tasks:
 
-    # - name: delete before tests
-    #   fadcos_load_balance_persistence:
-    #    action: remove
-    #    names:
-    #         - test1
-    #         - test2
-    #         - test3
-    #         - test4
+    - name: delete before tests
+      fadcos_load_balance_persistence:
+       action: remove
+       names:
+            - test1
+            - test2
+            - test3
+            - test4
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test1
-    #    type: hash-source-address-port
-    #    timeout: 400
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test1
+       type: hash-source-address-port
+       timeout: 400
 
-    # - name: create a duplicated item
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test1
-    #    type: source-address
-    #    timeout: 300
-    #    ipv4_maskbits: '32'
-    #    ipv6_maskbits: '128'
-    #    match_across_virtual_servers: disable
+    - name: create a duplicated item
+      fadcos_load_balance_persistence:
+       action: add
+       name: test1
+       type: source-address
+       timeout: 300
+       ipv4_maskbits: '32'
+       ipv6_maskbits: '128'
+       match_across_virtual_servers: disable
 
-    # - name: create another item
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test2
-    #    type: hash-source-address-port
+    - name: create another item
+      fadcos_load_balance_persistence:
+       action: add
+       name: test2
+       type: hash-source-address-port
 
-    # - name: edit a item
-    #   fadcos_load_balance_persistence:
-    #    action: edit
-    #    name: test2
-    #    type: hash-http-header
-    #    keyword: keyword
+    - name: edit a item
+      fadcos_load_balance_persistence:
+       action: edit
+       name: test2
+       type: hash-http-header
+       keyword: keyword
 
-    # - name: edit a non-exit item
-    #   fadcos_load_balance_persistence:
-    #    action: edit
-    #    name: test_no
+    - name: edit a non-exit item
+      fadcos_load_balance_persistence:
+       action: edit
+       name: test_no
 
-    # - name: delete test of both exist and non-exist items
-    #   fadcos_load_balance_persistence:
-    #    action: remove
-    #    names:
-    #         - test1
-    #         - test2
-    #         - test3
-    #         - test4
+    - name: delete test of both exist and non-exist items
+      fadcos_load_balance_persistence:
+       action: remove
+       names:
+            - test1
+            - test2
+            - test3
+            - test4
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test6
-    #    type: hash-cookie
-    #    keyword: keyword
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test6
+       type: hash-cookie
+       keyword: keyword
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test7
-    #    type: persistent-cookie
-    #    keyword: keyword
-    #    timeout: 300
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test7
+       type: persistent-cookie
+       keyword: keyword
+       timeout: 300
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test8
-    #    type: passive-cookie
-    #    keyword: keyword
-    #    timeout: 300
-    #    sess_kw_type: auto
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test8
+       type: passive-cookie
+       keyword: keyword
+       timeout: 300
+       sess_kw_type: auto
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test9
-    #    type: insert-cookie
-    #    keyword: keyword
-    #    timeout: 300
-    #    cookie_domain: ""
-    #    cookie_httponly: disable
-    #    cookie_secure: disable
-    #    cookie_samesite: nothing
-    #    cookie_custom_attr: disable
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test9
+       type: insert-cookie
+       keyword: keyword
+       timeout: 300
+       cookie_domain: ""
+       cookie_httponly: disable
+       cookie_secure: disable
+       cookie_samesite: nothing
+       cookie_custom_attr: disable
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test10
-    #    type: rewrite-cookie
-    #    keyword: keyword
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test10
+       type: rewrite-cookie
+       keyword: keyword
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test11
-    #    type: embedded-cookie
-    #    keyword: keyword
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test11
+       type: embedded-cookie
+       keyword: keyword
 
     - name: create
       fadcos_load_balance_persistence:
@@ -120,28 +120,28 @@
        override_connection_limit: enable
        radius_attribute_relation: OR
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test13
-    #    type: ssl-session-id
-    #    timeout: 400
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test13
+       type: ssl-session-id
+       timeout: 400
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test14
-    #    type: sip-call-id
-    #    timeout: 400
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test14
+       type: sip-call-id
+       timeout: 400
 
-    # - name: create
-    #   fadcos_load_balance_persistence:
-    #    action: add
-    #    name: test15
-    #    type: passive-cookie
-    #    timeout: 200
-    #    iso8583_bitmap_relation: OR
-    #    keyvalue_relation: AND
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test15
+       type: passive-cookie
+       timeout: 200
+       iso8583_bitmap_relation: OR
+       keyvalue_relation: AND
 
     - name: create
       fadcos_load_balance_persistence:
@@ -156,19 +156,19 @@
       fadcos_load_balance_persistence:
        action: get
 
-    # - name: get
-    #   fadcos_load_balance_persistence:
-    #    action: get
+    - name: get
+      fadcos_load_balance_persistence:
+       action: get
 
-    # - name: delete
-    #   fadcos_load_balance_persistence:
-    #    action: remove
-    #    names:
-    #         - test1
-    #         - test2
-    #         - test3
-    #         - test4
+    - name: delete
+      fadcos_load_balance_persistence:
+       action: remove
+       names:
+            - test1
+            - test2
+            - test3
+            - test4
 
-    # - name: get
-    #   fadcos_load_balance_persistence:
-    #    action: get
+    - name: get
+      fadcos_load_balance_persistence:
+       action: get

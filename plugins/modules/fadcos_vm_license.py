@@ -33,6 +33,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/upload/vmlicense'
 
 rep_dict = {
@@ -47,27 +50,36 @@ def replace_key(src_dict, rep_dict):
 
 
 def add_obj(module, connection):
+    after['added'] = module.params
     payload1 = {}
     payload1['data'] = module.params
 
-    # data1 = {
-    #        'license': {
-    #            'filename': payload1['data']['srcfile'],
-    #        }
-    # }
-    data2 = {
-        'license': "",
-        'filename': (payload1['data']['srcfile'], open(payload1['data']['srcfile']).read()),
-    }
+    try:
+        # data1 = {
+        #        'license': {
+        #            'filename': payload1['data']['srcfile'],
+        #        }
+        # }
+        data2 = {
+            'license': "",
+            'filename': (payload1['data']['srcfile'], open(payload1['data']['srcfile']).read()),
+        }
 
-    # content_type, b_data = prepare_multipart(data1)
-    b_data, content_type = urllib3.encode_multipart_formdata(data2)
-
+        # content_type, b_data = prepare_multipart(data1)
+        b_data, content_type = urllib3.encode_multipart_formdata(data2)
+    except Exception: 
+        response = "error reading " + payload1['data']['srcfile'] +", please check whether this file exists."
+        code = -1
+        return code, response, {}, {}
     headers = {
         'Content-type': content_type,
     }
-    code, response = connection.send_url_request(obj_url, b_data.decode('ascii'), headers=headers)
-    return code, response, headers, b_data.decode('ascii'),
+    if module.check_mode:
+        code = 0
+        response = 'check_mode: change detected.'
+    else:
+        code, response = connection.send_url_request(obj_url, b_data.decode('ascii'), headers=headers)
+    return code, response, headers, b_data.decode('ascii')
 
 
 def param_check(module, connection):
@@ -90,7 +102,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     action = module.params['action']
     result = {}
@@ -106,6 +118,9 @@ def main():
         code, response, h, b = add_obj(module, connection)
         result['res'] = response
         result['changed'] = True
+        if code == -1:
+            result['failed'] = True
+            result['changed'] = False
         # result['h'] = h
         # result['b'] = b
     else:
@@ -117,6 +132,12 @@ def main():
         result['err_msg'] = get_err_msg(connection, result['res']['payload'])
         result['changed'] = False
         result['failed'] = True
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
 
     module.exit_json(**result)
 

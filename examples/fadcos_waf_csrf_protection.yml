@@ -1,0 +1,30 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add waf_csrf_protection
+      fadcos_waf_csrf_protection:
+        action: add
+        name: cs1
+        security_action: alert
+        severity: medium
+        status: enable
+
+    - name: edit waf_csrf_protection
+      fadcos_waf_csrf_protection:
+        action: edit
+        name: cs1
+        security_action: block
+        severity: high
+
+    - name: get waf_csrf_protection
+      fadcos_waf_csrf_protection:
+        action: get
+        name: cs1
+
+    - name: delete waf_csrf_protection
+      fadcos_waf_csrf_protection:
+        action: delete
+        name: cs1

@@ -1,0 +1,26 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add waf_api_gateway_user
+      fadcos_waf_api_gateway_user:
+        action: add
+        name: au1
+
+    - name: edit waf_api_gateway_user
+      fadcos_waf_api_gateway_user:
+        action: edit
+        name: au1
+        comments: This is a test
+
+    - name: get waf_api_gateway_user
+      fadcos_waf_api_gateway_user:
+        action: get
+        name: au1
+
+    - name: delete waf_api_gateway_user
+      fadcos_waf_api_gateway_user:
+        action: delete
+        name: au1

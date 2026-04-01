@@ -34,8 +34,12 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 
 def add_basic_vs(module, connection):
+    after['added'] = module.params
     name = module.params['name']
     application = module.params['application']
     address = module.params['address']
@@ -56,8 +60,12 @@ def add_basic_vs(module, connection):
     if is_vdom_enable(connection):
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
-    response['post'] = payload
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
+        response['post'] = payload
 
     return code, response
 
@@ -77,7 +85,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
     result = {}
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
     if is_vdom_enable(connection) and not module.params['vdom']:
@@ -93,13 +101,22 @@ def main():
         result['res'] = response
         result['changed'] = True
 
-    if 'res' in result.keys() and type(result['res']) is dict\
+    if isinstance(result, dict) and 'res' in result.keys() and type(result['res']) is dict\
             and type(result['res']['payload']) is int and result['res']['payload'] < 0:
         result['err_msg'] = get_err_msg(connection, result['res']['payload'])
         result['changed'] = False
         result['failed'] = True
-        if result['res']['payload'] == -13 or result['res']['payload'] == -15:
+        if isinstance(result['res'], dict) and result['res']['payload'] == -13 or result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

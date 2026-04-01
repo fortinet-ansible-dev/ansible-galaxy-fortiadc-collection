@@ -1,0 +1,42 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: add
+        name: sen2
+        desc: this is a test
+        match_type: any
+
+    - name: Add another WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: add
+        name: sen3
+        desc: this is a new test
+        match_type: all
+
+    - name: edit WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: edit
+        name: sen3
+        desc: aaaaazzzz
+        match_type: any
+
+    - name: get WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: get
+        name: sen3
+
+    - name: delete WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: delete
+        name: sen3
+
+    - name: delete non-existant WAF data_leak_prevention_sensors
+      fadcos_waf_data_leak_prevention_sensors:
+        action: delete
+        name: akdlfaslfjs

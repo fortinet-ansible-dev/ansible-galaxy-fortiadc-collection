@@ -8,7 +8,7 @@
     - name: Delete a real server pool to prepare the test subject
       fadcos_real_server_pool:
         action: delete
-        name: rs_pool
+        name: rs_pool_tst
     - name: Delete a real server pool (delete non-exist entry) again to see whether it causes an error
       fadcos_real_server_pool:
         action: delete

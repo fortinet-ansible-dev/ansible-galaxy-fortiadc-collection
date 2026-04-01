@@ -134,10 +134,12 @@
     - name: get
       fadcos_load_balance_persistence:
        action: get
+       name: test1
 
     - name: delete
       fadcos_load_balance_persistence:
        action: remove
        names:
             - test1
+            - test2
 

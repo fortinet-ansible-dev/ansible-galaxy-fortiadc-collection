@@ -55,6 +55,9 @@ fadcos_backup_config:
   type: string
 """
 
+before = {}
+after = {}
+
 
 '''/api/system_global/back_config_disk'''
 
@@ -79,7 +82,11 @@ def save_config_adc(module, connection):
     }
 
     url = '/api/system_global/back_config_disk'
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -123,7 +130,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
     result = {}
     required_if = []
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, 
                            required_if=required_if)
     connection = Connection(module._socket_path)
     
@@ -149,6 +156,15 @@ def main():
     else:
         result['err_msg'] = 'error action: ' + action
         result['failed'] = True
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

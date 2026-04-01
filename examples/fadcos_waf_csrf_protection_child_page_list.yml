@@ -1,0 +1,32 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add waf_csrf_protection
+      fadcos_waf_csrf_protection:
+        action: add
+        name: cf1
+        security_action: alert
+        severity: medium
+        status: enable
+
+    - name: Add WAF csrf_protection_child_csrf_page_list entry
+      fadcos_waf_csrf_protection_child_page_list:
+        action: add
+        name: cf1
+        para_filter: enable
+        para_filter_name: time  
+        para_filter_value: date
+        url: /mytest/t1
+
+    - name: edit WAF csrf_protection_child_csrf_page_list entry
+      fadcos_waf_csrf_protection_child_page_list:
+        action: edit
+        name: cf1
+        id: 1
+        para_filter: enable
+        para_filter_name: money  
+        para_filter_value: gold
+        url: /newtest/a1

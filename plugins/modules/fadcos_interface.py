@@ -41,8 +41,17 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+rep_dict = {
+    'IPandMask': 'ip',
+    'IPv6andMask': 'ipv6',
+    'intf_type': 'type',
+    'redundant_member': 'redundant-member'
+}
 
 def add_interface(module, connection):
+    after['added'] = module.params
     name = module.params['name']
     mode = module.params['mode']
     status = module.params['status']
@@ -99,7 +108,11 @@ def add_interface(module, connection):
     if is_vdom_enable(connection) and not is_global_admin(connection):
         url += '?vdom=' + vdom
 
-    code, response = connection.send_request(url, payload)
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload)
 
     return code, response
 
@@ -111,7 +124,11 @@ def edit_interface(module, payload, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -132,6 +149,7 @@ def get_interface(module, connection):
 
 
 def delete_interface(module, connection):
+    after['deleted'] = module.params
     name = module.params['name']
     payload = {}
     url = '/api/system_interface?mkey=' + name
@@ -140,39 +158,33 @@ def delete_interface(module, connection):
         vdom = module.params['vdom']
         url += '&vdom=' + vdom
 
-    code, response = connection.send_request(url, payload, 'DELETE')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'DELETE')
 
     return code, response
 
 
 def needs_update(module, data):
     res = False
-
-    if module.params['mode'] and module.params['mode'] != data['mode']:
-        data['mode'] = module.params['mode']
-        res = True
-    if module.params['status'] and module.params['status'] != data['status']:
-        data['status'] = module.params['status']
-        res = True
-    if module.params['IPandMask'] and module.params['IPandMask'] != data['ip']:
-        data['ip'] = module.params['IPandMask']
-        res = True
-    if module.params['IPv6andMask'] and module.params['IPv6andMask'] != data['ipv6']:
-        data['ipv6'] = module.params['IPv6andMask']
-        res = True
-    if module.params['mtu'] and module.params['mtu'] != data['mtu']:
-        data['mtu'] = module.params['mtu']
-        res = True
-    if module.params['intf_type'] and module.params['intf_type'] != data['type']:
-        data['type'] = module.params['intf_type']
-        res = True
-    if list_need_update(module.params['allowaccess'], data['allowaccess']):
-        data['allowaccess'] = list_to_str(module.params['allowaccess'])
-        res = True
-    if list_need_update(module.params['redundant_member'], data['redundant-member']):
-        data['redundant-member'] = list_to_str(
-            module.params['redundant_member'])
-        res = True
+    params = module.params
+    for key in params.keys():
+        if params[key] is not None:
+            data_key = None
+            if key in data.keys() and params[key] != data[key]:
+                data_key = key 
+            elif key in rep_dict.keys() and rep_dict[key] in data.keys() and params[key] != data[rep_dict[key]] :
+                data_key = rep_dict[key]
+            else:
+                continue #This key's value is not changed. 
+            if isinstance(params[key], str) and isinstance(data[data_key], str) and params[key].rstrip() == data[data_key].rstrip():
+                continue #some sring values returned from API have trailing whitespace
+            before[key] = data[data_key]
+            after[key] = params[key]
+            data[data_key] = params[key]
+            res = True
 
     return res, data
 
@@ -224,7 +236,7 @@ def main():
         mode=dict(type='str'),
         IPandMask=dict(type='str'),
         IPv6andMask=dict(type='str'),
-        allowaccess=dict(type='list'),
+        allowaccess=dict(type='str'),
         mtu=dict(type='str', default='1500'),
         intf_type=dict(type='str'),
         vlanid=dict(type='str'),
@@ -247,7 +259,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = [('name')]
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
 
@@ -257,7 +269,9 @@ def main():
     if not param_pass:
         result['err_msg'] = param_err
         result['failed'] = True
-    elif action == 'add':
+        module.exit_json(**result)
+    code, data = get_interface(module, connection)
+    if action == 'add':
         code, response = add_interface(module, connection)
         result['res'] = response
         result['changed'] = True
@@ -266,7 +280,7 @@ def main():
         result['res'] = response
     elif action == 'edit':
         code, data = get_interface(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             res, new_data = needs_update(module, data['payload'])
         else:
             result['failed'] = False
@@ -278,7 +292,7 @@ def main():
             result['changed'] = True
     elif action == 'delete':
         code, data = get_interface(module, connection)
-        if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+        if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
             code, response = delete_interface(module, connection)
             result['res'] = response
             result['changed'] = True
@@ -295,6 +309,15 @@ def main():
         result['failed'] = True
         if result['res']['payload'] == -15:
             result['failed'] = False
+
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+    else:
+        if module.check_mode:
+           result['res'] = 'Check mode: no changes detected.'  
 
     module.exit_json(**result)
 

@@ -19,12 +19,13 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'network'}
+				    'status': ['preview'],
+				    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
 module: fadcos_health_check_script
+short_description: Configure health check script on FortiADC devices via RESTful APIs
 description:
 	Configure health check script on FortiADC devices via RESTful APIs
     User upload a local script file via API as to be the health check script
@@ -62,20 +63,20 @@ EXAMPLES = """
   tasks:
     - name: Add Health Checks
       fadcos_health_check_script:
-        action: add
-        name: mytest
-        file: tst_script.sh
+		action: add
+		name: mytest
+		file: tst_script.sh
 	
     - name: edit Health Checks
       fadcos_health_check_script:
-        action: edit
-        name: mytest
-        file: tst_script2.sh
+		action: edit
+		name: mytest
+		file: tst_script2.sh
 		
     - name: delete Health Checks
       fadcos_health_check_script:
-        action: delete
-        name: mytest
+		action: delete
+		name: mytest
 """
 
 RETURN = """
@@ -85,13 +86,17 @@ fadcos_health_check:
   type: string
 """
 
-def add_hc_script(module, connection): 
+before = {}
+after = {}
+
+def add_hc_script(module, connection):
+	after['added'] = module.params
 	if 'file' in module.params.keys():
 		f = open(module.params['file'], "r")
 		content = f.read()
 	payload = {
 		'mkey': module.params['name'],
-        'script': content,
+		'script': content,
 		'scriptid': '1',
 	}
 		
@@ -99,8 +104,12 @@ def add_hc_script(module, connection):
 	if is_vdom_enable(connection):
 		vdom = module.params['vdom']
 		url += '?vdom=' + vdom
-	
-	code, response = connection.send_request(url, payload)
+
+	if module.check_mode:
+		code = 0
+		response = 'Check mode: changes detected.'
+	else:
+		code, response = connection.send_request(url, payload)
 
 	return code, response
 
@@ -122,6 +131,7 @@ def get_hc_script(module, connection):
 	return code, response
 
 def delete_hc_script(module, connection):
+	after['deleted'] = module.params
 	name = module.params['name']
 	payload = {}
 	url = '/api/system_health_check_script?mkey=' + name
@@ -130,7 +140,11 @@ def delete_hc_script(module, connection):
 		vdom = module.params['vdom']
 		url += '&vdom=' + vdom
 
-	code, response = connection.send_request(url, payload, 'DELETE')
+	if module.check_mode:
+		code = 0
+		response = 'Check mode: changes detected.' 
+	else:
+		code, response = connection.send_request(url, payload, 'DELETE')
 	return code, response
 
 def edit_hc_script(module, payload, connection):
@@ -141,7 +155,11 @@ def edit_hc_script(module, payload, connection):
 		vdom = module.params['vdom']
 		url += '&vdom=' + vdom
 
-	code, response = connection.send_request(url, payload, 'PUT')
+	if module.check_mode:
+		code = 0
+		response = 'Check mode: changes detected.' 
+	else:
+		code, response = connection.send_request(url, payload, 'PUT')
 	return code, response
 
 def update_hc_script(module, data):
@@ -150,6 +168,7 @@ def update_hc_script(module, data):
 	if 'file' in module.params.keys():
 		f = open(module.params['file'], "r")
 		data['script'] = f.read()
+		after['file'] = module.params['file']
 		res = True
 
 	return res, data
@@ -176,15 +195,15 @@ def param_check(module, connection):
 
 def main():
 	argument_spec = dict(
-        action=dict(type='str', required=True),
+		action=dict(type='str', required=True),
 		name=dict(type='str'),
 		file=dict(type='str'),
-        vdom=dict(type='str'),
+		vdom=dict(type='str'),
 	)
 	argument_spec.update(fadcos_argument_spec)
 
 	required_if = [('name')]
-	module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
+	module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
 	connection = Connection(module._socket_path)
 
 	action = module.params['action']
@@ -193,7 +212,8 @@ def main():
 	if not param_pass:
 		result['err_msg'] = param_err
 		result['failed'] = True
-	elif action == 'add':
+		module.exit_json(**result)
+	if action == 'add':
 		code, response = add_hc_script(module, connection)
 		result['res'] = response
 		result['changed'] = True
@@ -203,7 +223,7 @@ def main():
 		result['ok'] = True
 	elif action == 'edit':
 		code, data = get_hc_script(module, connection)
-		if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+		if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
 			res, new_data = update_hc_script(module, data['payload'])
 		else:
 			res = False
@@ -214,7 +234,7 @@ def main():
 			result['changed'] = True
 	elif action == 'delete':
 		code, data = get_hc_script(module, connection)
-		if 'payload' in data.keys() and data['payload'] and type(data['payload']) is not int:
+		if isinstance(data, dict) and 'payload' in data and data['payload'] and type(data['payload']) is not int:
 			code, response = delete_hc_script(module, connection)
 			result['res'] = response
 			result['changed'] = True
@@ -232,7 +252,18 @@ def main():
 			result['failed'] = True
 			if result['res']['payload'] == -15:
 				result['failed'] = False
+	if 'changed' in result.keys() and result['changed'] == True:
+		result['diff'] = {
+		    'before': before,
+		    'after': after
+		}
+	else:
+		if module.check_mode:
+			result['res'] = 'Check mode: no changes detected.'
+
 	module.exit_json(**result)
+ 
+
 
 if __name__ == '__main__':
 	main()

@@ -16,6 +16,16 @@
        query_port: '161'
        security_level: authpriv
        status: enable
+       vdom: root
+
+    - name: create
+      fadcos_system_snmp_user:
+       action: add
+       name: test2
+       query_port: '163'
+       security_level: noauthnopriv
+       status: enable
+       vdom: root
 
     - name: edit
       fadcos_system_snmp_user:
@@ -28,14 +38,17 @@
        query_port: '161'
        security_level: authpriv
        status: disable
+       vdom: root
 
     - name: get
       fadcos_system_snmp_user:
        action: get
+       vdom: root
 
     - name: remove
       fadcos_system_snmp_user:
        action: remove
        names:
             - test
-
+            - test2
+       vdom: root

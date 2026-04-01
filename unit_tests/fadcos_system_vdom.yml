@@ -9,6 +9,12 @@
       fadcos_vdom:
        action: add
        name: vd1
+
+    - name: get vdom for test
+      fadcos_system_vdom:
+       action: get
+       name: vd1
+
     - name: edit
       fadcos_system_vdom:
        action: edit

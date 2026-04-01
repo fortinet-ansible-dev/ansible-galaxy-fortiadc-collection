@@ -1,0 +1,74 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add WAF http_header_security
+      fadcos_waf_http_header_security:
+        action: add
+        name: hts1
+        mode: add-always
+        request_status: enable
+        request_url: /test/hhs1
+
+    - name: Add waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: add
+        name: hts1
+        include_subdomain: disable
+        max_age: 31536000
+        rule_name: x-xss-protection
+        preload: disable
+        report_only: disable
+        value: block-mode
+
+    - name: Add waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: add
+        name: hts1
+        include_subdomain: disable
+        max_age: 31536000
+        rule_name: x-xss-protection
+        preload: disable
+        report_only: disable
+        value: block-mode
+      check_mode: true        
+
+    - name: edit waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: edit
+        name: hts1
+        id: 1
+        include_subdomain: disable
+        rule_name: content-security-policy
+        policy: p1
+      check_mode: true
+
+    - name: edit waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: edit
+        name: hts1
+        id: 1
+        include_subdomain: disable
+        rule_name: content-security-policy
+        policy: p1
+
+    - name: get waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: edit
+        name: hts1
+        id: 1
+
+    - name: delete waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: delete
+        name: hts1
+        id: 1
+      check_mode: true
+
+    - name: delete waf_http_header_security_child_rule_list
+      fadcos_waf_http_header_security_child_rule_list:
+        action: delete
+        name: hts1
+        id: 1

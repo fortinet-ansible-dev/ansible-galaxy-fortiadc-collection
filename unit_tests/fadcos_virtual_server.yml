@@ -19,14 +19,15 @@
        name: test_vs
     - name: Add the real server pool for test
       fadcos_real_server_pool:
-        action: edit
+        action: add
         name: rs_pool_tst
         iptype: ipv4
         vdom: root
         healthcheck: enable
         health_check_list:
                 - LB_HLTHCK_HTTPS
-                - LB_HLTHCK_ICMP  
+                - LB_HLTHCK_ICMP 
+
     - name: Add virtual server
       fadcos_virtual_server:
        action: add
@@ -39,6 +40,8 @@
        port: 80
        profile: LB_PROF_TCP
        vstype: l4-load-balance
+
+
     - name: check virtual server to ensure it is added
       fadcos_virtual_server:
        action: get
@@ -55,22 +58,29 @@
        port: 8080
        profile: LB_PROF_TCP
        vstype: l4-load-balance
+       dos_profile: a
+       captcha_profile: TEST1
+
     - name: check the result of duplication add of virtual server
       fadcos_virtual_server:
        action: get
        name: test_vs
+
     - name: Edit virtual server
       fadcos_virtual_server:
        action: edit
        name: test_vs
        status: enable
        iptype: ipv4
-       ip: 6.6.6.1
+       ip: 9.6.6.1
        interface: port2
        pool: rs_pool_tst
        port: 80
        profile: LB_PROF_TCP
        vstype: l4-load-balance
+       dos_profile: B
+       captcha_profile: LB_CAPTCHA_PROFILE_DEFAULT
+
     - name: check virtual server to ensure it is edited
       fadcos_virtual_server:
        action: get

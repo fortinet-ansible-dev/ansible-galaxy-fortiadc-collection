@@ -10,6 +10,14 @@
        action: add
        snmp_id: '1'
        ip: '172.23.133.177/24'
+       vdom: root 
+
+    - name: get id 1
+      fadcos_system_snmp_community_child_host:
+       action: get
+       snmp_id: '1'
+       id: 1
+       vdom: root
 
     - name: edit
       fadcos_system_snmp_community_child_host:
@@ -17,11 +25,20 @@
        snmp_id: '1'
        id: '1'
        ip: '7.7.7.7/80'
+       vdom: root
 
     - name: get
       fadcos_system_snmp_community_child_host:
        action: get
        snmp_id: '1'
+       vdom: root
+
+    - name: get 1
+      fadcos_system_snmp_community_child_host:
+       action: get
+       snmp_id: '1'
+       id: '1'
+       vdom: root
 
     - name: remove
       fadcos_system_snmp_community_child_host:
@@ -29,4 +46,10 @@
        snmp_id: '1'
        id_list:
             - '1'
+       vdom: root
 
+    - name: get
+      fadcos_system_snmp_community_child_host:
+       action: get
+       snmp_id: '1'
+       vdom: root

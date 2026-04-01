@@ -1,0 +1,26 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add cors_protection
+      fadcos_waf_cors_protection:
+        action: add
+        name: test_cp
+
+    - name: get cors_protection
+      fadcos_waf_cors_protection:
+        action: get
+        name: test_cp
+
+    - name: edit cors_protection
+      fadcos_waf_cors_protection:
+        action: edit
+        name: test_cp
+        status: enable        
+
+    - name: delete cors_protection
+      fadcos_waf_cors_protection:
+        action: delete
+        name: test_cp

@@ -31,6 +31,9 @@ EXAMPLES = """
 RETURN = """
 """
 
+before = {}
+after = {}
+
 obj_url = '/api/system_ha?vdom=&mkey=-1'
 
 rep_dict = {
@@ -61,9 +64,13 @@ def replace_key(src_dict, rep_dict):
             src_dict[new_key] = src_dict.pop(key)
 
 
-def edit_obj(payload, connection):
+def edit_obj(module, payload, connection):
     url = obj_url
-    code, response = connection.send_request(url, payload, 'PUT')
+    if module.check_mode:
+        code = 0
+        response = 'Check mode: changes detected.' 
+    else:
+        code, response = connection.send_request(url, payload, 'PUT')
 
     return code, response
 
@@ -80,6 +87,8 @@ def combine_dict(src_dict, dst_dict):
     changed = False
     for key in dst_dict:
         if key in src_dict and src_dict[key] is not None and dst_dict[key] != src_dict[key]:
+            before[key] = dst_dict[key]
+            after[key] = src_dict[key]
             dst_dict[key] = src_dict[key]
             changed = True
 
@@ -137,7 +146,7 @@ def main():
     argument_spec.update(fadcos_argument_spec)
 
     required_if = []
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_if=required_if)
     connection = Connection(module._socket_path)
     result = {'changed': False}
@@ -148,14 +157,20 @@ def main():
         res, data = get_obj(module, connection)
         update, update_data = needs_update(module, data)
         if update:
-            code, response = edit_obj(update_data, connection)
+            code, response = edit_obj(module, update_data, connection)
             result['changed'] = True
             result['code'] = code
             result['res'] = response
         else:
             result['res'] = 'Do not update'
         result['update_data'] = data
-        result['send_data'] = update_data
+        # result['send_data'] = update_data
+    if 'changed' in result.keys() and result['changed'] == True:
+        result['diff'] = {
+            'before': before,
+            'after': after
+        }
+
     module.exit_json(**result)
 
 

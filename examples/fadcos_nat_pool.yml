@@ -5,11 +5,41 @@
   connection: httpapi
   gather_facts: false
   tasks:
-    - name: Manage nat pool
+    - name: Add nat pool
       fadcos_nat_pool:
-        action: delete
+        action: add
         name: natpool
         interface: port1
         iptype: ipv4
         ipstart: 192.168.2.101
         ipend: 192.168.2.109
+        vdom: root
+
+    - name: edit nat pool  
+      fadcos_nat_pool:
+        action: edit
+        name: natpool
+        interface: port2
+        iptype: ipv4
+        ipstart: 3.3.3.3
+        ipend: 3.3.3.10
+        vdom: root
+
+    - name: get nat pool
+      fadcos_nat_pool:
+        action: get
+        name: natpool
+        vdom: root
+
+    - name: delete nat pool
+      fadcos_nat_pool:
+        action: delete
+        name: natpool
+        vdom: root
+
+    - name: get nat pool
+      fadcos_nat_pool:
+        action: get
+        vdom: root
+
+

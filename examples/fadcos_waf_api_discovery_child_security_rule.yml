@@ -1,0 +1,42 @@
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add waf_api_discovery
+      fadcos_waf_api_discovery:
+        action: add
+        name: ad1
+        api_discovery: enable
+
+    - name: Add WAF api_discovery_child_security_rule
+      fadcos_waf_api_discovery_child_security_rule:
+        action: add
+        name: ad1
+        security_action: alert
+        base_url: hh1
+        path: /login
+        req_rate: 333
+        severity: low
+
+    - name: Get WAF api_discovery_child_security_rule
+      fadcos_waf_api_discovery_child_security_rule:
+        action: get
+        name: ad1
+        id: 1
+
+    - name: Edit WAF api_discovery_child_security_rule
+      fadcos_waf_api_discovery_child_security_rule:
+        action: edit
+        name: ad1
+        id: 1
+        security_action: block
+        base_url: abtesturl
+        req_rate: 999
+
+    - name: Delete WAF api_discovery_child_security_rule
+      fadcos_waf_api_discovery_child_security_rule:
+        action: delete
+        name: ad1
+        id: 1

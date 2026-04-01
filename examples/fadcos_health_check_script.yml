@@ -1,0 +1,23 @@
+---
+- name:
+  hosts: all
+  vars:
+  connection: httpapi
+  gather_facts: false
+  tasks:
+    - name: Add Health Checks
+      fadcos_health_check_script:
+       action: add
+       name: mytest
+       file: testsh1.sh
+
+    - name: edit Health Checks
+      fadcos_health_check_script:
+       action: edit
+       name: mytest
+       file: testsh2.sh
+
+    - name: delete Health Checks
+      fadcos_health_check_script:
+       action: delete
+       name: mytest

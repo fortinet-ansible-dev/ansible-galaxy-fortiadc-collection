@@ -5,6 +5,16 @@
   connection: httpapi
   gather_facts: false
   tasks:
+    - name: create
+      fadcos_load_balance_persistence:
+       action: add
+       name: test
+       type: radius-attribute
+       timeout: 400
+       match_across_servers: enable
+       override_connection_limit: enable
+       radius_attribute_relation: OR
+
     - name: add
       fadcos_load_balance_persistence_child_radius_attribute:
        action: add
@@ -22,6 +32,13 @@
       fadcos_load_balance_persistence_child_radius_attribute:
        action: get
        name: test
+
+    - name: get 1
+      fadcos_load_balance_persistence_child_radius_attribute:
+       action: get
+       name: test
+       id_list:
+            - '1'
 
     - name: remove
       fadcos_load_balance_persistence_child_radius_attribute:

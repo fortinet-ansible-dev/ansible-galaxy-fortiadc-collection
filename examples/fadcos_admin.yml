@@ -5,12 +5,32 @@
   connection: httpapi
   gather_facts: false
   tasks:
-    - name: Create admin
+    - name: add an admin as a test subject
       fadcos_admin:
        action: add
-       name: test1
-       vdom: ["root"]
-       #multi vdom: ["root", "vdom1", "vdom2"]
-       password: a
+       name: test9
+       password: aaa
+       global_admin: false
+       vdom: vdom1 vdom2
        # if need cheange pwd and user is not global admin oldpassword need to set
        #oldpassword: a
+
+    - name: edit admin
+      fadcos_admin:
+       action: edit
+       name: test1
+       vdom: root vdom2
+       password: qwerty
+       oldpassword: abc789
+       global_admin: false
+
+    - name: get admin
+      fadcos_admin:
+       action: get
+       name: test1
+
+    - name: delete the admin
+      fadcos_admin:
+       action: delete
+       name: test1
+       password: qwerty

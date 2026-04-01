@@ -13,11 +13,12 @@
             - '2'
             - '3'
             - '4'
+            - '5'
 
     - name: add
       fadcos_system_snmp_community:
        action: add
-       name: test
+       name: mytest
        query_v1_port: '101'
        query_v1_status: enable
        query_v2c_port: '101'
@@ -26,7 +27,7 @@
     - name: duplicated add to test idempotency
       fadcos_system_snmp_community:
        action: add
-       name: test1
+       name: mytest1
        query_v1_port: '102'
        query_v1_status: disable
        query_v2c_port: '102'
@@ -36,7 +37,7 @@
     - name: add another test subject
       fadcos_system_snmp_community:
        action: add
-       name: test3
+       name: mytest2
        query_v1_port: '111'
        query_v1_status: enable
        query_v2c_port: '111'
@@ -45,6 +46,11 @@
     - name: check the result of add
       fadcos_system_snmp_community:
        action: get
+ 
+    - name: get 1
+      fadcos_system_snmp_community:
+       action: get
+       id: '1'
 
     - name: edit
       fadcos_system_snmp_community:
